@@ -52,6 +52,10 @@ export async function supa(
       503,
     );
   }
+  
+  const body: any = await r.json();
+  
+  return body;
 }
 export async function session() {
   const jar = await cookies();
