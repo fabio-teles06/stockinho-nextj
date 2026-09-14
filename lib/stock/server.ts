@@ -101,8 +101,17 @@ export async function saveSession(s: any) {
   });
 }
 export function sameOrigin(req: Request) {
-  if (!isAllowedOrigin(req, process.env.APP_URL))
+  const allowed = isAllowedOrigin(req, process.env.APP_URL);
+
+  if (!allowed) {
+    console.warn("[auth] Origem rejeitada", {
+      receivedOrigin: req.headers.get("origin"),
+      configuredAppUrl: process.env.APP_URL ?? "(não configurada)",
+      requestUrl: req.url,
+    });
+
     throw new ApiError("Origem da requisição inválida.", 403);
+  }
 }
 export async function allRows(table: string, token: string) {
   let rows: any[] = [];
