@@ -24,7 +24,7 @@ Na aba **Variables** do serviço, configure:
 
 O processo usa `PORT` fornecida pelo Railway e escuta em `0.0.0.0`. O Dockerfile já define `NODE_ENV=production`. As credenciais são lidas em execução e não precisam entrar no build. Não envie `.env.local` ao GitHub.
 
-Sem Supabase, a aplicação continua em demonstração local. Sem Gemini, o assistente responde com análises calculadas. A troca de endereço não transporta o armazenamento local da demonstração do site anterior.
+O Supabase é obrigatório para cadastro, login e acesso ao painel. Sem Gemini, o assistente continua respondendo com análises calculadas a partir dos dados autorizados da empresa.
 
 ## 3. Configurar o banco e as contas
 

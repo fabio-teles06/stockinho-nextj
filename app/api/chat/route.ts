@@ -60,8 +60,8 @@ export async function POST(req: Request) {
     try {
       const r = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/" +
-          encodeURIComponent(process.env.GEMINI_MODEL) +
-          ":generateContent",
+        encodeURIComponent(process.env.GEMINI_MODEL) +
+        ":generateContent",
         {
           method: "POST",
           headers: {
@@ -89,7 +89,17 @@ export async function POST(req: Request) {
           signal: AbortSignal.timeout(20000),
         },
       );
-      if (!r.ok) throw Error("IA indisponível");
+      if (!r.ok) {
+        const failure: any = await r.json().catch(() => null);
+
+        console.error("[gemini] Falha na API", {
+          httpStatus: r.status,
+          status: failure?.error?.status,
+          message: failure?.error?.message,
+        });
+
+        throw new Error("IA indisponível");
+      }
       const result: any = await r.json();
       const answer = result.candidates?.[0]?.content?.parts
         ?.map((p: any) => p.text || "")

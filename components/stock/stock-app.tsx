@@ -8,6 +8,8 @@ import {
   isValidElement,
   FormEvent,
 } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Package,
   LayoutDashboard,
@@ -98,11 +100,9 @@ import { toast } from "sonner";
 import {
   Data,
   Product,
-  seed,
   uid,
   money,
   number,
-  analyze,
 } from "@/modules/stock/model";
 const nav = [
   ["Visão geral", LayoutDashboard],
@@ -198,17 +198,26 @@ const titles: Record<string, string> = {
   Configurações: "Organize sua empresa e suas preferências.",
   Ajuda: "Um jeito fácil de começar.",
 };
-export default function StockApp({ initialData }: { initialData: Data }) {
+export default function StockApp({
+  initialData,
+  initialEmail,
+}: {
+  initialData: Data;
+  initialEmail?: string;
+}) {
+  const router = useRouter();
   const [data, setData] = useState<Data>(initialData);
-  const [ready, setReady] = useState(false);
-  const [mode, setMode] = useState<"demo" | "live">("demo");
-  const [view, setView] = useState("Visão geral");
-  const [tenant, setTenant] = useState("demo-mercado");
-  const [location, setLocation] = useState("l1");
+  const [view, setView] = useState(
+    initialData.companies.length ? "Visão geral" : "Configurações",
+  );
+  const [tenant, setTenant] = useState(initialData.companies[0]?.id || "");
+  const [location, setLocation] = useState(initialData.locations[0]?.id || "");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [period, setPeriod] = useState("7");
-  const [modal, setModal] = useState("");
+  const [modal, setModal] = useState(
+    initialData.companies.length ? "" : "company",
+  );
   const [edit, setEdit] = useState<any>(null);
   const [deleting, setDeleting] = useState<any>(null);
   const [busy, setBusy] = useState(false);
@@ -218,47 +227,7 @@ export default function StockApp({ initialData }: { initialData: Data }) {
   const [messages, setMessages] = useState<{ role: string; text: string }[]>(
     [],
   );
-  const [user, setUser] = useState("Fabio");
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const r = await fetch("/api/stock");
-        if (r.ok) {
-          const d: any = await r.json();
-          if (mounted) {
-            setData(d.data);
-            setMode("live");
-            setUser(d.email?.split("@")[0] || "Olá");
-            setTenant(d.data.companies[0]?.id || "");
-            setLocation(d.data.locations[0]?.id || "");
-            if (!d.data.companies.length) {
-              setView("Configurações");
-              setModal("company");
-            }
-          }
-        } else {
-          const saved = localStorage.getItem("stockinho-demo-v1");
-          if (saved && mounted) setData(JSON.parse(saved));
-        }
-      } catch {
-        const saved = localStorage.getItem("stockinho-demo-v1");
-        if (saved && mounted)
-          try {
-            setData(JSON.parse(saved));
-          } catch {}
-      } finally {
-        if (mounted) setReady(true);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-  useEffect(() => {
-    if (ready && mode === "demo")
-      localStorage.setItem("stockinho-demo-v1", JSON.stringify(data));
-  }, [data, ready, mode]);
+  const [user] = useState(initialEmail?.split("@")[0] || "Olá");
   useEffect(() => {
     if (notice) {
       toast.success(notice);
@@ -335,8 +304,8 @@ export default function StockApp({ initialData }: { initialData: Data }) {
           },
           { signal: controller.signal },
         ),
-      ).catch(() => {});
-    } catch {}
+      ).catch(() => { });
+    } catch { }
     return () => controller.abort();
   }, []);
   const locations = data.locations.filter((x) => x.tenant_id === tenant),
@@ -365,8 +334,8 @@ export default function StockApp({ initialData }: { initialData: Data }) {
       Date.now() - Number(period) * 86400000,
   );
   const incoming = recent
-      .filter((m) => m.type === "entrada")
-      .reduce((s, m) => s + Number(m.quantity), 0),
+    .filter((m) => m.type === "entrada")
+    .reduce((s, m) => s + Number(m.quantity), 0),
     outgoing = recent
       .filter((m) => m.type === "saida")
       .reduce((s, m) => s + Number(m.quantity), 0);
@@ -408,13 +377,11 @@ export default function StockApp({ initialData }: { initialData: Data }) {
   async function change(
     action: string,
     payload: any,
-    apply: (d: Data) => Data,
   ) {
     setBusy(true);
     setError("");
     try {
-      if (mode === "live") {
-        const r = await fetch("/api/stock", {
+      const r = await fetch("/api/stock", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action, tenant_id: tenant, ...payload }),
@@ -428,7 +395,6 @@ export default function StockApp({ initialData }: { initialData: Data }) {
         setData(next);
         if (!tenant) setTenant(next.companies[0]?.id || "");
         if (!location) setLocation(next.locations[0]?.id || "");
-      } else setData(apply(structuredClone(data)));
       setModal("");
       setDeleting(null);
       setNotice("Tudo certo! Alteração salva.");
@@ -467,12 +433,7 @@ export default function StockApp({ initialData }: { initialData: Data }) {
         setError("Este código de barras já está cadastrado.");
         return;
       }
-      change("product", { item: p }, (d) => ({
-        ...d,
-        products: edit
-          ? d.products.map((x) => (x.id === id ? p : x))
-          : [...d.products, p],
-      }));
+      change("product", { item: p });
     }
     if (modal === "movement") {
       const quantity = Number(f.quantity),
@@ -509,23 +470,7 @@ export default function StockApp({ initialData }: { initialData: Data }) {
         note: String(f.note),
         created_at: new Date().toISOString(),
       };
-      change("movement", { item }, (d) => {
-        let b = d.balances.find(
-          (x) => x.product_id === pid && x.location_id === location,
-        );
-        if (!b) {
-          b = {
-            tenant_id: tenant,
-            product_id: pid,
-            location_id: location,
-            quantity: 0,
-          };
-          d.balances.push(b);
-        }
-        b.quantity += type === "entrada" ? quantity : -quantity;
-        d.movements.unshift(item as any);
-        return d;
-      });
+      change("movement", { item });
     }
     if (modal === "category") {
       const item = {
@@ -534,12 +479,7 @@ export default function StockApp({ initialData }: { initialData: Data }) {
         name: String(f.name).trim(),
         color: String(f.color),
       };
-      change("category", { item }, (d) => ({
-        ...d,
-        categories: edit
-          ? d.categories.map((x) => (x.id === id ? item : x))
-          : [...d.categories, item],
-      }));
+      change("category", { item });
     }
     if (modal === "location") {
       const item = {
@@ -549,32 +489,14 @@ export default function StockApp({ initialData }: { initialData: Data }) {
         type: String(f.type),
         address: String(f.address),
       };
-      change("location", { item }, (d) => ({
-        ...d,
-        locations: edit
-          ? d.locations.map((x) => (x.id === id ? item : x))
-          : [...d.locations, item],
-      }));
+      change("location", { item });
     }
     if (modal === "member") {
-      if (mode === "demo") {
-        setError(
-          "A equipe é gerenciada após conectar o Supabase e entrar na conta.",
-        );
-        return;
-      }
-      change(
-        "member",
-        { email: String(f.email), role: String(f.role) },
-        (d) => d,
-      );
+      change("member", { email: String(f.email), role: String(f.role) });
     }
     if (modal === "company") {
       const item = { id, name: String(f.name).trim() };
-      change("company", { item }, (d) => ({
-        ...d,
-        companies: [...d.companies, item],
-      }));
+      change("company", { item });
     }
   }
   async function ask(q = question) {
@@ -583,10 +505,7 @@ export default function StockApp({ initialData }: { initialData: Data }) {
     setMessages((m) => [...m, { role: "user", text: q }]);
     setBusy(true);
     try {
-      let answer = "";
-      if (mode === "demo") answer = analyze(q, data, tenant, location);
-      else {
-        const r = await fetch("/api/chat", {
+      const r = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -597,8 +516,7 @@ export default function StockApp({ initialData }: { initialData: Data }) {
         });
         const b: any = await r.json();
         if (!r.ok) throw Error(b.error);
-        answer = b.answer;
-      }
+      const answer = b.answer;
       setMessages((m) => [...m, { role: "assistant", text: answer }]);
     } catch (e: any) {
       setMessages((m) => [
@@ -791,12 +709,12 @@ export default function StockApp({ initialData }: { initialData: Data }) {
     >
       <Sidebar className="stock-sidebar">
         <SidebarHeader>
-          <a className="brand" href="/" aria-label="Stockinho início">
+          <Link className="brand" href="/painel" aria-label="Stockinho painel">
             <span>
               <Package size={26} strokeWidth={2} />
             </span>
             stockinho<span className="brand-dot">.</span>
-          </a>
+          </Link>
           <div className="company-picker">
             <span className="company-icon">
               <Store size={19} />
@@ -867,7 +785,7 @@ export default function StockApp({ initialData }: { initialData: Data }) {
             <span className="avatar">{user.slice(0, 1).toUpperCase()}T</span>
             <span>
               <strong>{user === "Fabio" ? "Fabio Teles" : user}</strong>
-              <small>{mode === "demo" ? "Demonstração" : "Minha conta"}</small>
+              <small>Minha conta</small>
             </span>
             <Settings size={17} />
           </button>
@@ -936,17 +854,6 @@ export default function StockApp({ initialData }: { initialData: Data }) {
               />
             </div>
           </div>
-          {mode === "demo" && (
-            <div className="demo-line">
-              <span className="badge neutral">Modo demonstração</span>
-              <span>
-                Explore à vontade. As alterações ficam neste navegador.
-              </span>
-              <a href="/login">
-                Entrar na minha conta <ArrowUpRight size={13} />
-              </a>
-            </div>
-          )}
           {view === "Visão geral" && (
             <>
               <div className="dashboard-toolbar">
@@ -1531,9 +1438,7 @@ export default function StockApp({ initialData }: { initialData: Data }) {
                 <div>
                   <h2>Assistente Stockinho</h2>
                   <p>
-                    {mode === "demo"
-                      ? "Análise local dos dados de demonstração"
-                      : "Consultas aos dados da sua empresa"}{" "}
+                    Consultas aos dados da sua empresa{" "}
                     ·{" "}
                     {locations.find((l) => l.id === location)?.name ||
                       "Selecione uma unidade"}
@@ -1643,26 +1548,18 @@ export default function StockApp({ initialData }: { initialData: Data }) {
                 <IconBox icon={Settings} tone="blue" />
                 <h2>Conta e conexão</h2>
                 <p>
-                  {mode === "demo"
-                    ? "Você está explorando uma demonstração. Entre para usar uma empresa conectada ao Supabase."
-                    : "Sua conta está conectada ao Supabase. Os dados são isolados por empresa e salvos na nuvem."}
+                  Sua conta está conectada ao Supabase. Os dados são isolados por empresa e salvos na nuvem.
                 </p>
-                <a className="btn" href="/login">
-                  {mode === "demo" ? "Acessar minha conta" : "Gerenciar acesso"}
-                  <ArrowUpRight size={16} />
-                </a>
-                {mode === "live" && (
                   <button
                     className="btn"
                     onClick={async () => {
                       await fetch("/api/auth", { method: "DELETE" });
-                      window.location.href = "/login";
+                      router.push("/login");
                     }}
                   >
                     <LogOut size={16} />
                     Sair da conta
                   </button>
-                )}
               </section>
             </div>
           )}
@@ -1904,21 +1801,21 @@ export default function StockApp({ initialData }: { initialData: Data }) {
             {(modal === "category" ||
               modal === "location" ||
               modal === "company") && (
-              <label>
-                Nome
-                <input
-                  name="name"
-                  required
-                  maxLength={100}
-                  defaultValue={edit?.name}
-                  placeholder={
-                    modal === "company"
-                      ? "Nome do seu negócio"
-                      : "Digite um nome"
-                  }
-                />
-              </label>
-            )}
+                <label>
+                  Nome
+                  <input
+                    name="name"
+                    required
+                    maxLength={100}
+                    defaultValue={edit?.name}
+                    placeholder={
+                      modal === "company"
+                        ? "Nome do seu negócio"
+                        : "Digite um nome"
+                    }
+                  />
+                </label>
+              )}
             {modal === "member" && (
               <>
                 <label>
@@ -2044,22 +1941,6 @@ export default function StockApp({ initialData }: { initialData: Data }) {
                 change(
                   "delete",
                   { type: deleting.type, id: deleting.item.id },
-                  (d) =>
-                    deleting.type === "product"
-                      ? {
-                          ...d,
-                          products: d.products.map((p) =>
-                            p.id === deleting.item.id
-                              ? { ...p, active: false }
-                              : p,
-                          ),
-                        }
-                      : {
-                          ...d,
-                          categories: d.categories.filter(
-                            (c) => c.id !== deleting.item.id,
-                          ),
-                        },
                 );
               }}
             >

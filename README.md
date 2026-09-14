@@ -6,7 +6,7 @@ Sistema acadêmico de estoque para pequenos comércios. Frontend e API seguem o 
 
 ## Estado desta entrega
 
-A demonstração funciona sem credenciais, com dados fictícios persistidos no navegador. Autenticação real, banco compartilhado, RLS e IA generativa precisam da configuração abaixo. A demonstração não é uma autenticação e não oferece isolamento entre usuários do mesmo navegador. Ela fica identificada visualmente. Dados reais nunca são copiados para o armazenamento da demonstração.
+A rota inicial apresenta o produto e direciona para cadastro ou login. O painel fica em `/painel`, exige uma sessão válida e usa exclusivamente os dados da empresa armazenados no Supabase. IA generativa depende da configuração opcional descrita abaixo.
 
 ## Configurar o Supabase
 
@@ -29,7 +29,7 @@ Para Next.js convencional em desenvolvimento, execute `pnpm exec next dev`. Para
 
 - `app/`: rotas Next.js, layout e API do próprio sistema.
 - `components/stock/`: interface administrativa e fluxos de cadastro.
-- `modules/stock/model.ts`: contratos de dados, demonstração e regras analíticas compartilhadas.
+- `modules/stock/model.ts`: contratos de dados e regras analíticas compartilhadas.
 - `lib/stock/server.ts`: sessões, cliente REST Supabase e consulta dos dados.
 - `database/schema.sql`: tabelas, relacionamentos, índices, permissões e funções transacionais.
 - `tests/`: verificações das regras relevantes.

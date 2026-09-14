@@ -1,15 +1,26 @@
 "use client";
 import { useEffect, useState, FormEvent } from "react";
-import { Package, ArrowUpRight, Leaf, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Package, Leaf, ArrowRight } from "lucide-react";
+
+type AuthResponse = {
+  configured?: boolean;
+  confirmation?: boolean;
+  message?: string;
+  error?: string;
+};
+
 export default function Login() {
+  const router = useRouter();
   const [signup, setSignup] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
     [configured, setConfigured] = useState<boolean | null>(null);
   useEffect(() => {
     fetch("/api/auth")
-      .then((r) => r.json())
-      .then((d: any) => setConfigured(d.configured))
+      .then(async (r) => (await r.json()) as AuthResponse)
+      .then((d) => setConfigured(Boolean(d.configured)))
       .catch(() => setConfigured(false));
   }, []);
   async function submit(e: FormEvent<HTMLFormElement>) {
@@ -23,12 +34,12 @@ export default function Login() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...f, action: signup ? "signup" : "login" }),
       });
-      const d: any = await r.json();
-      if (!r.ok) throw Error(d.error);
-      if (d.confirmation) setMessage(d.message);
-      else window.location.href = "/";
-    } catch (e: any) {
-      setMessage(e.message);
+      const d = (await r.json()) as AuthResponse;
+      if (!r.ok) throw Error(d.error || "Não foi possível entrar.");
+      if (d.confirmation) setMessage(d.message || "Confira seu e-mail.");
+      else router.push("/painel");
+    } catch (error: unknown) {
+      setMessage(error instanceof Error ? error.message : "Erro inesperado.");
     } finally {
       setBusy(false);
     }
@@ -36,12 +47,12 @@ export default function Login() {
   return (
     <main className="auth-page">
       <section className="auth-story">
-        <a className="brand" href="/">
+        <Link className="brand" href="/">
           <span>
             <Package size={26} />
           </span>
           stockinho<span className="brand-dot">.</span>
-        </a>
+        </Link>
         <h1>
           Seu estoque organizado.
           <br />
@@ -65,8 +76,8 @@ export default function Login() {
           </p>
           {configured === false && (
             <p className="form-error">
-              A conexão com o Supabase ainda precisa ser configurada. Enquanto
-              isso, você pode explorar a demonstração.
+              A conexão com o Supabase ainda precisa ser configurada. Fale com
+              o responsável pela instalação para liberar o acesso.
             </p>
           )}
           <form className="stock-form" onSubmit={submit}>
@@ -119,9 +130,6 @@ export default function Login() {
               {signup ? "Entrar" : "Criar conta"}
             </button>
           </div>
-          <a href="/" className="auth-demo">
-            Explorar demonstração <ArrowUpRight size={15} />
-          </a>
         </div>
       </section>
     </main>
