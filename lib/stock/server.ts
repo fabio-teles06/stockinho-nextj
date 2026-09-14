@@ -24,25 +24,34 @@ export async function supa(
   init: RequestInit = {},
 ): Promise<any> {
   const { url, key } = config();
-  const r = await fetch(url + path, {
-    ...init,
-    headers: {
-      apikey: key,
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json",
-      ...init.headers,
-    },
-    cache: "no-store",
-  });
-  const body: any = await r.json().catch(() => null);
-  if (!r.ok)
+  let r: Response;
+
+  try {
+    r = await fetch(url + path, {
+      ...init,
+      headers: {
+        apikey: key,
+        Authorization: "Bearer " + token,
+        "Content-Type": "application/json",
+        ...init.headers,
+      },
+      cache: "no-store",
+    });
+  } catch (error) {
+    const cause = (error as {
+      cause?: { code?: string; message?: string };
+    }).cause;
+  
+    console.error("[supabase] Falha de conexão", {
+      code: cause?.code,
+      message: cause?.message,
+    });
+  
     throw new ApiError(
-      body?.message ||
-        body?.error_description ||
-        "Não foi possível concluir a operação.",
-      r.status === 401 ? 401 : r.status === 403 ? 403 : 400,
+      "Não foi possível conectar ao Supabase. Tente novamente.",
+      503,
     );
-  return body;
+  }
 }
 export async function session() {
   const jar = await cookies();
