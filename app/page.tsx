@@ -24,6 +24,7 @@ const steps = [
   ["03", "Movimente e acompanhe", "Registre cada entrada e saída e deixe o Stockinho cuidar do resto."],
 ];
 
+
 function Brand() {
   return (
     <a className="home-brand" href="#inicio" aria-label="Stockinho — início">
@@ -35,7 +36,13 @@ function Brand() {
 
 export default function Home() {
   return (
+
+    
     <main className="home-page" id="inicio">
+
+
+
+
       <header className="home-header">
         <Brand />
         <nav aria-label="Navegação principal">
@@ -43,11 +50,59 @@ export default function Home() {
           <a href="#como-funciona">Como funciona</a>
           <a href="#beneficios">Benefícios</a>
         </nav>
+
+        
+
+
+
+
+
+
         <div className="home-header-actions">
           <a className="home-login" href="/login">Entrar</a>
           <a className="home-button small" href="/login">Começar agora <ArrowUpRight size={15} /></a>
         </div>
       </header>
+
+
+<nav  id="menu" className="navbar bg-body-tertiary fixed-top">
+  <div id="container-fluid" className="container-fluid">
+    
+    <button className="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+      <span className="navbar-toggler-icon"></span>
+    </button>
+    <div    className="offcanvas offcanvas-end" tabIndex={-1} id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel"  data-bs-scroll="true">
+      <div className="offcanvas-header">
+        <h5 className="offcanvas-title" id="offcanvasNavbarLabel"></h5>
+        <button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div className="offcanvas-body">
+        <ul className="navbar-nav justify-content-end flex-grow-1 pe-3">
+          <li className="nav-item">
+            <a className="nav-link active" aria-current="page" href="/login">Entrar</a>
+          </li>
+          {/*<li className="nav-item">
+            <a className="nav-link"  href="#como-funciona">Veja como funciona <ArrowUpRight size={15} /></a>
+          </li>
+          <li className="nav-item dropdown">
+            <a className="nav-link dropdown-toggle" href="menu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Dropdown
+            </a>
+            <ul className="dropdown-menu">
+               *<li><a className="dropdown-item" href="#">Recursos</a></li>
+              <li><a className="dropdown-item" href="#">Another action</a></li>
+              <li>
+                <hr className="dropdown-divider"/>
+              </li>
+              <li><a className="dropdown-item" href="#">Something else here</a></li>
+            </ul>
+          </li>*/}
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>
+
 
       <section className="home-hero">
         <div className="hero-copy">
@@ -124,7 +179,10 @@ export default function Home() {
 
       <section className="home-cta"><div><span>PRONTO PARA COMEÇAR?</span><h2>Um estoque organizado muda o dia inteiro.</h2></div><a className="home-button" href="/login">Criar minha conta <ArrowRight size={17} /></a></section>
 
-      <footer className="home-footer"><Brand /><p>Controle de estoque simples para negócios que fazem a diferença.</p><div><a href="#recursos">Recursos</a><a href="#como-funciona">Como funciona</a><a href="/login">Entrar</a></div><small>© 2026 Stockinho. Feito com cuidado para pequenos negócios.</small></footer>
+<footer className="home-footer"><Brand /><p>Controle de estoque simples para negócios que fazem a diferença.</p><div><a href="#recursos">Recursos</a><a href="#como-funciona">Como funciona</a><a href="/login">Entrar</a></div><small>© 2026 Stockinho. Feito com cuidado para pequenos negócios.</small></footer>
+   <script  async src="	https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    
     </main>
+
   );
 }
