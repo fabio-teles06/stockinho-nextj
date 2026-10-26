@@ -231,6 +231,7 @@ export default function StockApp({
   const [accountingOpen, setAccountingOpen] = useState(false);
   const [accountingEmail, setAccountingEmail] = useState("");
   const [accountingBusy, setAccountingBusy] = useState(false);
+  const [assistantTipOpen, setAssistantTipOpen] = useState(true);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<{ role: string; text: string }[]>(
     [],
@@ -243,6 +244,10 @@ export default function StockApp({
       return () => clearTimeout(t);
     }
   }, [notice]);
+  useEffect(() => {
+    const timer = setTimeout(() => setAssistantTipOpen(false), 15000);
+    return () => clearTimeout(timer);
+  }, []);
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
@@ -846,16 +851,26 @@ export default function StockApp({
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <div className="sidebar-tip">
-            <span className="tip-icon">
-              <Sparkles size={20} />
-            </span>
-            <strong>Uma mãozinha para o seu negócio</strong>
-            <p>Tire dúvidas sobre seu estoque com o assistente Stockinho.</p>
-            <button onClick={() => go("Assistente IA")}>
-              Vamos conversar <ArrowUpRight size={16} />
-            </button>
-          </div>
+          {assistantTipOpen && (
+            <div className="sidebar-tip">
+              <button
+                className="tip-close"
+                type="button"
+                aria-label="Fechar ajuda do assistente"
+                onClick={() => setAssistantTipOpen(false)}
+              >
+                <X size={15} />
+              </button>
+              <span className="tip-icon">
+                <Sparkles size={20} />
+              </span>
+              <strong>Uma mãozinha para o seu negócio</strong>
+              <p>Tire dúvidas sobre seu estoque com o assistente Stockinho.</p>
+              <button onClick={() => go("Assistente IA")}>
+                Vamos conversar <ArrowUpRight size={16} />
+              </button>
+            </div>
+          )}
           <button className="profile" onClick={() => go("Configurações")}>
             <span className="avatar">{user.slice(0, 1).toUpperCase()}T</span>
             <span>
@@ -1672,30 +1687,47 @@ export default function StockApp({
                     Administradores gerenciam as permissões. Operadores podem
                     apenas consultar a equipe.
                   </p>
-                  <div className="team-list">
-                    {data.memberships
-                      .filter((member) => member.tenant_id === tenant)
-                      .map((member) => (
-                        <div className="settings-row" key={member.id}>
-                          <Mail size={18} />
-                          <div>
-                            <strong>{member.email}</strong>
-                            <span className="muted">
-                              {member.role === "admin" ? "Administrador" : "Operador"}
-                            </span>
-                          </div>
-                          {canManage && (
-                            <button
-                              className="btn"
-                              type="button"
-                              onClick={() => open("member", member)}
-                            >
-                              <Pencil size={15} />
-                              Editar
-                            </button>
-                          )}
-                        </div>
-                      ))}
+                  <div className="team-table-wrap">
+                    <table className="team-table">
+                      <thead>
+                        <tr>
+                          <th>E-mail</th>
+                          <th>Permissão</th>
+                          {canManage && <th className="team-action-cell">Ação</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.memberships
+                          .filter((member) => member.tenant_id === tenant)
+                          .map((member) => (
+                            <tr key={member.id}>
+                              <td>
+                                <span className="team-email">
+                                  <Mail size={16} />
+                                  {member.email}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={"badge " + (member.role === "admin" ? "success" : "neutral")}>
+                                  {member.role === "admin" ? "Administrador" : "Operador"}
+                                </span>
+                              </td>
+                              {canManage && (
+                                <td className="team-action-cell">
+                                  <button
+                                    className="btn"
+                                    type="button"
+                                    onClick={() => open("member", member)}
+                                  >
+                                    <Pencil size={15} />
+                                    Editar
+                                  </button>
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
                   </div>
                   {canManage && (
                     <button className="btn" onClick={() => open("member")}>
