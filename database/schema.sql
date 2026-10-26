@@ -75,17 +75,19 @@ update public.sk_balances set quantity=quantity+case when p_type='entrada' then 
 insert into public.sk_movements(tenant_id,product_id,location_id,type,quantity,reason,note,created_by) values(p_tenant,p_product,p_location,p_type,p_quantity,p_reason,coalesce(p_note,''),auth.uid()) returning id into movement_id;
 return movement_id;end$$;
 create function public.stockinho_move(p_tenant uuid,p_product uuid,p_location uuid,p_type text,p_quantity numeric,p_reason text,p_note text default '') returns uuid language sql security invoker set search_path='' as $$select stockinho_private.move(p_tenant,p_product,p_location,p_type,p_quantity,p_reason,p_note)$$;
+create function stockinho_private.list_members(p_tenant uuid) returns table(id uuid,tenant_id uuid,user_id uuid,email text,role text) language sql security definer set search_path='' as $$select m.id,m.tenant_id,m.user_id,u.email,m.role from public.sk_memberships m join auth.users u on u.id=m.user_id where m.tenant_id=p_tenant and stockinho_private.member(p_tenant)$$;
+create function public.stockinho_list_members(p_tenant uuid) returns table(id uuid,tenant_id uuid,user_id uuid,email text,role text) language sql security invoker set search_path='' as $$select * from stockinho_private.list_members(p_tenant)$$;
 create function stockinho_private.add_member(p_tenant uuid,p_email text,p_role text) returns void language plpgsql security definer set search_path='' as $$declare member_id uuid;begin
 if auth.uid() is null or not stockinho_private.member(p_tenant,true) then raise exception 'Apenas administradores podem adicionar membros';end if;
 if p_role not in ('admin','operator') then raise exception 'Papel inválido';end if;
 select id into member_id from auth.users where lower(email)=lower(trim(p_email)) and email_confirmed_at is not null;
 if member_id is null then raise exception 'O usuário deve criar e confirmar sua conta primeiro';end if;
 if member_id=auth.uid() then raise exception 'Não é possível alterar seu próprio papel';end if;
-insert into public.sk_memberships(tenant_id,user_id,role) values(p_tenant,member_id,p_role) on conflict(tenant_id,user_id) do nothing;
+insert into public.sk_memberships(tenant_id,user_id,role) values(p_tenant,member_id,p_role) on conflict(tenant_id,user_id) do update set role=excluded.role;
 end$$;
 create function public.stockinho_add_member(p_tenant uuid,p_email text,p_role text) returns void language sql security invoker set search_path='' as $$select stockinho_private.add_member(p_tenant,p_email,p_role)$$;
 revoke all on function stockinho_private.create_company(text),stockinho_private.move(uuid,uuid,uuid,text,numeric,text,text),stockinho_private.add_member(uuid,text,text),stockinho_private.fixed_tenant(),stockinho_private.archive_guard() from public;
-revoke all on function public.stockinho_create_company(text),public.stockinho_move(uuid,uuid,uuid,text,numeric,text,text),public.stockinho_add_member(uuid,text,text) from public;
+revoke all on function stockinho_private.list_members(uuid),public.stockinho_list_members(uuid),public.stockinho_create_company(text),public.stockinho_move(uuid,uuid,uuid,text,numeric,text,text),public.stockinho_add_member(uuid,text,text) from public;
 grant execute on function stockinho_private.create_company(text),stockinho_private.move(uuid,uuid,uuid,text,numeric,text,text),stockinho_private.add_member(uuid,text,text) to authenticated;
-grant execute on function public.stockinho_create_company(text),public.stockinho_move(uuid,uuid,uuid,text,numeric,text,text),public.stockinho_add_member(uuid,text,text) to authenticated;
+grant execute on function stockinho_private.list_members(uuid),public.stockinho_list_members(uuid),public.stockinho_create_company(text),public.stockinho_move(uuid,uuid,uuid,text,numeric,text,text),public.stockinho_add_member(uuid,text,text) to authenticated;
 commit;

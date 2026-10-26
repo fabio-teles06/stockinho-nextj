@@ -19,6 +19,8 @@ Na aba **Variables** do serviço, configure:
 | `SUPABASE_URL` | URL do projeto Supabase escolhido |
 | `SUPABASE_PUBLISHABLE_KEY` | Chave publicável do mesmo projeto; nunca service_role |
 | `APP_URL` | Endereço HTTPS final, por exemplo `https://stockinho-production.up.railway.app` |
+| `RESEND_API_KEY` | Chave da API do Resend para convites e relatórios por e-mail |
+| `RESEND_FROM_EMAIL` | Remetente verificado no Resend, por exemplo `Stockinho <noreply@seudominio.com>` |
 | `GEMINI_API_KEY` | Opcional: chave do Gemini, mantida no servidor |
 | `GEMINI_MODEL` | Opcional: nome de um modelo disponível na sua conta |
 

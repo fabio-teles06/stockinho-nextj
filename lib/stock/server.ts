@@ -146,11 +146,10 @@ export async function allRows(table: string, token: string) {
   }
 }
 export async function snapshot(token: string) {
-  const [companies, memberships, locations, categories, products, balances, movements] =
+  const [companies, locations, categories, products, balances, movements] =
     await Promise.all(
       [
         "sk_companies",
-        "sk_memberships",
         "sk_locations",
         "sk_categories",
         "sk_products",
@@ -158,6 +157,16 @@ export async function snapshot(token: string) {
         "sk_movements",
       ].map((t) => allRows(t, token)),
     );
+  const memberships = (
+    await Promise.all(
+      companies.map((company: { id: string }) =>
+        supa("/rest/v1/rpc/stockinho_list_members", token, {
+          method: "POST",
+          body: JSON.stringify({ p_tenant: company.id }),
+        }),
+      ),
+    )
+  ).flat();
   return { companies, memberships, locations, categories, products, balances, movements };
 }
 export function failure(e: any) {

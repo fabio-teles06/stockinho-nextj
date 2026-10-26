@@ -3,6 +3,7 @@ export type Membership = {
   id: string;
   tenant_id: string;
   user_id: string;
+  email: string;
   role: "admin" | "operator";
 };
 export type Location = {
@@ -190,6 +191,7 @@ export function seed(): Data {
         id: "membership-demo",
         tenant_id,
         user_id: "user-demo",
+        email: "admin@demo.com",
         role: "admin",
       },
     ],

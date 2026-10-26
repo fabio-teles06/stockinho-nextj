@@ -161,14 +161,51 @@ export async function POST(req: Request) {
       );
     }
     if (action === "member") {
+      const resendKey = process.env.RESEND_API_KEY;
+      const from = process.env.RESEND_FROM_EMAIL;
+      if (!resendKey || !from)
+        throw new ApiError(
+          "O envio de convite ainda não está configurado. Defina RESEND_API_KEY e RESEND_FROM_EMAIL.",
+          503,
+        );
+      const companyRows = await supa(
+        "/rest/v1/sk_companies?id=eq." + tenant + "&select=name",
+        token,
+      );
+      const companyName = companyRows[0]?.name;
+      if (!companyName) throw new ApiError("Empresa inválida.", 400);
+      const email = z.string().email().parse(b.email);
+      const role = z.enum(["admin", "operator"]).parse(b.role);
       await supa("/rest/v1/rpc/stockinho_add_member", token, {
         method: "POST",
         body: JSON.stringify({
           p_tenant: tenant,
-          p_email: z.string().email().parse(b.email),
-          p_role: z.enum(["admin", "operator"]).parse(b.role),
+          p_email: email,
+          p_role: role,
         }),
       });
+      const appUrl = process.env.APP_URL || new URL(req.url).origin;
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from,
+          to: [email],
+          subject: `Você foi adicionado à equipe da ${companyName}`,
+          html: `<p>Você foi adicionado à equipe da <strong>${companyName}</strong> como <strong>${role === "admin" ? "administrador" : "operador"}</strong>.</p><p>Acesse o Stockinho para começar: <a href="${appUrl}/login">${appUrl}/login</a></p>`,
+        }),
+      });
+      if (!response.ok) {
+        const body = await response.text();
+        console.error("[members] Falha ao enviar convite", {
+          status: response.status,
+          body,
+        });
+        throw new ApiError("Membro adicionado, mas não foi possível enviar o e-mail.", 502);
+      }
     }
     return Response.json({ ok: true });
   } catch (e: any) {

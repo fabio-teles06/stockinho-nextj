@@ -1663,10 +1663,34 @@ export default function StockApp({
                 <div className="team-section">
                   <h2>Equipe da empresa</h2>
                   <p>
-                    Adicione pessoas com conta confirmada no Stockinho.
-                    Operadores consultam e movimentam estoque; administradores
-                    também gerenciam cadastros.
+                    Administradores gerenciam as permissões. Operadores podem
+                    apenas consultar a equipe.
                   </p>
+                  <div className="team-list">
+                    {data.memberships
+                      .filter((member) => member.tenant_id === tenant)
+                      .map((member) => (
+                        <div className="settings-row" key={member.id}>
+                          <Mail size={18} />
+                          <div>
+                            <strong>{member.email}</strong>
+                            <span className="muted">
+                              {member.role === "admin" ? "Administrador" : "Operador"}
+                            </span>
+                          </div>
+                          {canManage && (
+                            <button
+                              className="btn"
+                              type="button"
+                              onClick={() => open("member", member)}
+                            >
+                              <Pencil size={15} />
+                              Editar
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                  </div>
                   {canManage && (
                     <button className="btn" onClick={() => open("member")}>
                       <Plus size={17} />
@@ -1795,7 +1819,9 @@ export default function StockApp({
                         ? "Editar unidade"
                         : "Nova loja ou depósito"
                       : modal === "member"
-                        ? "Adicionar membro"
+                        ? edit
+                          ? "Editar membro"
+                          : "Adicionar membro"
                         : "Nova empresa"}
             </DialogTitle>
             <DialogDescription>
@@ -1989,6 +2015,8 @@ export default function StockApp({
                     name="email"
                     type="email"
                     required
+                    defaultValue={edit?.email}
+                    readOnly={!!edit}
                     placeholder="pessoa@exemplo.com"
                   />
                 </label>
