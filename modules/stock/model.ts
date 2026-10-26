@@ -1,4 +1,10 @@
 export type Company = { id: string; name: string };
+export type Membership = {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  role: "admin" | "operator";
+};
 export type Location = {
   id: string;
   tenant_id: string;
@@ -43,6 +49,7 @@ export type Movement = {
 };
 export type Data = {
   companies: Company[];
+  memberships: Membership[];
   locations: Location[];
   categories: Category[];
   products: Product[];
@@ -178,6 +185,14 @@ export function seed(): Data {
   }
   return {
     companies: [{ id: tenant_id, name: "Mercadinho Boa Vizinhança" }],
+    memberships: [
+      {
+        id: "membership-demo",
+        tenant_id,
+        user_id: "user-demo",
+        role: "admin",
+      },
+    ],
     locations,
     categories,
     products,

@@ -8,6 +8,8 @@ Sistema acadêmico de estoque para pequenos comércios. Frontend e API seguem o 
 
 A rota inicial apresenta o produto e direciona para cadastro ou login. O painel fica em /painel, exige uma sessão válida e usa exclusivamente os dados da empresa armazenados no Supabase. IA generativa depende da configuração opcional descrita abaixo.
 
+Esta entrega acrescenta dois recursos funcionais ao controle de estoque: análise do estoque por unidade com assistente de perguntas e exportação do catálogo filtrado em CSV. Também inclui cadastro/login/logout, perfis administrativos e de operação, validação de permissões no servidor, pesquisa por nome/código, filtros por situação/categoria, ordenação cronológica e histórico limitado às 100 movimentações mais recentes.
+
 ## Configurar o Supabase
 
 - Use um projeto Supabase dedicado. Execute database/schema.sql uma vez no SQL Editor.
@@ -134,6 +136,7 @@ Esses comandos usam a dependência Next.js já declarada. A versão inicial vali
 - modules/stock/model.ts: contratos de dados e regras analíticas compartilhadas.
 - lib/stock/server.ts: sessões, cliente REST Supabase e consulta dos dados.
 - database/schema.sql: tabelas, relacionamentos, índices, permissões e funções transacionais.
+- database/DER.md: diagrama entidade-relacionamento atualizado, em Mermaid.
 - tests/: verificações das regras relevantes.
 
 ## Regras de negócio
@@ -144,14 +147,34 @@ Movimentações são imutáveis. O banco bloqueia o produto e saldo durante a tr
 
 O painel utiliza saldos atuais, preços de custo atuais e movimentações no período escolhido. Não é um módulo de faturamento. O ranking considera apenas saídas com motivo Venda no mês-calendário anterior; transferências e perdas não contam como vendas. Reposição sugere duas vezes o mínimo cadastrado, sem previsão estatística. Unidades de medidas diferentes são somadas apenas como um indicador de itens; não representam peso ou volume total.
 
-## Autenticação e API
+## Autenticação e API REST
 
 Sessões usam cookies HttpOnly, SameSite=Lax e Secure em produção. A API verifica o usuário no Supabase e renova a sessão com refresh token. Mutações validam Origin, entrada via Zod e permissões por empresa; as RLS continuam sendo aplicadas. Somente a chave publicável e token do usuário são usados nas requisições ao banco. Respostas autenticadas não são armazenadas em cache. Respostas 401 são JSON, sem redirecionamento da API.
 
-- GET /api/stock: snapshot das empresas acessíveis.
-- POST /api/stock: ações company, product, category, location, movement, delete e member.
-- POST /api/auth: login/cadastro; DELETE /api/auth: logout.
-- POST /api/chat: pergunta com tenant_id e location_id; os dados são limitados à empresa/unidade autorizada antes de enviar ao modelo.
+Todas as rotas abaixo são APIs próprias do projeto e usam JSON:
+
+| Endpoint | Métodos | Uso |
+| --- | --- | --- |
+| `/api/auth` | `GET`, `POST`, `DELETE` | Verifica configuração; cadastra/login com `{ email, password, action }`; encerra a sessão. |
+| `/api/stock` | `GET`, `POST` | Consulta o snapshot; mantém empresas, produtos, categorias, unidades, movimentações e membros. O POST recebe `{ action, tenant_id, item }`. |
+| `/api/chat` | `POST` | Consulta o estoque por `{ question, tenant_id, location_id }`, retornando `{ answer, mode }`. |
+| `/api/health` | `GET` | Healthcheck JSON para publicação. |
+
+O cadastro é realizado pelo Supabase Auth, que armazena a senha somente como hash. A empresa usa dois perfis: `admin`, que pode manter cadastros e equipe, e `operator`, que consulta o estoque e registra movimentações. O servidor e as políticas RLS repetem essa restrição, portanto esconder botões não é a única barreira de acesso.
+
+### Exemplos de chamadas
+
+```bash
+curl -X POST http://localhost:3000/api/auth \
+	-H 'Content-Type: application/json' \
+	-d '{"action":"login","email":"voce@exemplo.com","password":"senha-com-8-digitos"}'
+
+curl http://localhost:3000/api/stock
+
+curl -X POST http://localhost:3000/api/chat \
+	-H 'Content-Type: application/json' \
+	-d '{"question":"Quais produtos devo reabastecer?","tenant_id":"UUID_DA_EMPRESA","location_id":"UUID_DA_UNIDADE"}'
+```
 
 ## Limites
 

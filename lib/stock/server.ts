@@ -147,10 +147,11 @@ export async function allRows(table: string, token: string) {
   }
 }
 export async function snapshot(token: string) {
-  const [companies, locations, categories, products, balances, movements] =
+  const [companies, memberships, locations, categories, products, balances, movements] =
     await Promise.all(
       [
         "sk_companies",
+        "sk_memberships",
         "sk_locations",
         "sk_categories",
         "sk_products",
@@ -158,7 +159,7 @@ export async function snapshot(token: string) {
         "sk_movements",
       ].map((t) => allRows(t, token)),
     );
-  return { companies, locations, categories, products, balances, movements };
+  return { companies, memberships, locations, categories, products, balances, movements };
 }
 export function failure(e: any) {
   return Response.json(

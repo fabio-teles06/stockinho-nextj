@@ -311,6 +311,10 @@ export default function StockApp({
   const locations = data.locations.filter((x) => x.tenant_id === tenant),
     categories = data.categories.filter((x) => x.tenant_id === tenant),
     products = data.products.filter((x) => x.tenant_id === tenant && x.active);
+  const role =
+    data.memberships.find((membership) => membership.tenant_id === tenant)
+      ?.role || "operator";
+  const canManage = role === "admin";
   const qty = (id: string) =>
     data.balances
       .filter(
@@ -668,20 +672,24 @@ export default function StockApp({
                 <TableCell>
                   {!compact && (
                     <div className="row-actions">
-                      <button
-                        aria-label={"Editar " + p.name}
-                        onClick={() => open("product", p)}
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        aria-label={"Arquivar " + p.name}
-                        onClick={() =>
-                          setDeleting({ type: "product", item: p })
-                        }
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      {canManage && (
+                        <>
+                          <button
+                            aria-label={"Editar " + p.name}
+                            onClick={() => open("product", p)}
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            aria-label={"Arquivar " + p.name}
+                            onClick={() =>
+                              setDeleting({ type: "product", item: p })
+                            }
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </TableCell>
@@ -785,7 +793,7 @@ export default function StockApp({
             <span className="avatar">{user.slice(0, 1).toUpperCase()}T</span>
             <span>
               <strong>{user === "Fabio" ? "Fabio Teles" : user}</strong>
-              <small>Minha conta</small>
+              <small>{role === "admin" ? "Administrador" : "Operador"}</small>
             </span>
             <Settings size={17} />
           </button>
@@ -1185,10 +1193,12 @@ export default function StockApp({
                   <Download size={16} />
                   Exportar
                 </button>
-                <button className="btn primary" onClick={() => open("product")}>
-                  <Plus size={18} />
-                  Novo produto
-                </button>
+                {canManage && (
+                  <button className="btn primary" onClick={() => open("product")}>
+                    <Plus size={18} />
+                    Novo produto
+                  </button>
+                )}
               </div>
               <section className="panel">
                 <div className="panel-heading">
@@ -1320,13 +1330,15 @@ export default function StockApp({
                 <p>
                   {categories.length} categorias para organizar seus produtos
                 </p>
-                <button
-                  className="btn primary"
-                  onClick={() => open("category")}
-                >
-                  <Plus size={18} />
-                  Nova categoria
-                </button>
+                {canManage && (
+                  <button
+                    className="btn primary"
+                    onClick={() => open("category")}
+                  >
+                    <Plus size={18} />
+                    Nova categoria
+                  </button>
+                )}
               </div>
               <div className="entity-grid">
                 {categories.map((c) => (
@@ -1338,22 +1350,24 @@ export default function StockApp({
                       >
                         <Tags size={25} />
                       </span>
-                      <div className="row-actions">
-                        <button
-                          aria-label={"Editar " + c.name}
-                          onClick={() => open("category", c)}
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          aria-label={"Excluir " + c.name}
-                          onClick={() =>
-                            setDeleting({ type: "category", item: c })
-                          }
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                      {canManage && (
+                        <div className="row-actions">
+                          <button
+                            aria-label={"Editar " + c.name}
+                            onClick={() => open("category", c)}
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            aria-label={"Excluir " + c.name}
+                            onClick={() =>
+                              setDeleting({ type: "category", item: c })
+                            }
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <h2>{c.name}</h2>
                     <p>
@@ -1378,13 +1392,15 @@ export default function StockApp({
             <>
               <div className="list-toolbar">
                 <p>Estoque independente para cada unidade do seu negócio.</p>
-                <button
-                  className="btn primary"
-                  onClick={() => open("location")}
-                >
-                  <Plus size={18} />
-                  Nova unidade
-                </button>
+                {canManage && (
+                  <button
+                    className="btn primary"
+                    onClick={() => open("location")}
+                  >
+                    <Plus size={18} />
+                    Nova unidade
+                  </button>
+                )}
               </div>
               <div className="entity-grid">
                 {locations.map((l) => (
@@ -1413,13 +1429,15 @@ export default function StockApp({
                       >
                         Acessar estoque <ArrowUpRight size={15} />
                       </button>
-                      <button
-                        className="icon-button"
-                        aria-label={"Editar " + l.name}
-                        onClick={() => open("location", l)}
-                      >
-                        <Pencil size={16} />
-                      </button>
+                      {canManage && (
+                        <button
+                          className="icon-button"
+                          aria-label={"Editar " + l.name}
+                          onClick={() => open("location", l)}
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      )}
                     </div>
                   </section>
                 ))}
@@ -1527,10 +1545,12 @@ export default function StockApp({
                     </span>
                   </div>
                 ))}
-                <button className="btn primary" onClick={() => open("company")}>
-                  <Plus size={17} />
-                  Adicionar empresa
-                </button>
+                {canManage && (
+                  <button className="btn primary" onClick={() => open("company")}>
+                    <Plus size={17} />
+                    Adicionar empresa
+                  </button>
+                )}
                 <div className="team-section">
                   <h2>Equipe da empresa</h2>
                   <p>
@@ -1538,10 +1558,12 @@ export default function StockApp({
                     Operadores consultam e movimentam estoque; administradores
                     também gerenciam cadastros.
                   </p>
-                  <button className="btn" onClick={() => open("member")}>
-                    <Plus size={17} />
-                    Adicionar membro
-                  </button>
+                  {canManage && (
+                    <button className="btn" onClick={() => open("member")}>
+                      <Plus size={17} />
+                      Adicionar membro
+                    </button>
+                  )}
                 </div>
               </section>
               <section className="panel settings-panel">
