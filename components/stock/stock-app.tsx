@@ -639,7 +639,7 @@ export default function StockApp({
           email: accountingEmail,
         }),
       });
-      const body = await response.json();
+      const body = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(body.error || "Não foi possível enviar o relatório.");
       setAccountingOpen(false);
       setAccountingEmail("");
