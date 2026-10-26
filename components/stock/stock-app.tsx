@@ -204,9 +204,11 @@ const titles: Record<string, string> = {
 export default function StockApp({
   initialData,
   initialEmail,
+  initialUserId,
 }: {
   initialData: Data;
   initialEmail?: string;
+  initialUserId?: string;
 }) {
   const router = useRouter();
   const [data, setData] = useState<Data>(initialData);
@@ -318,7 +320,11 @@ export default function StockApp({
     categories = data.categories.filter((x) => x.tenant_id === tenant),
     products = data.products.filter((x) => x.tenant_id === tenant && x.active);
   const role =
-    data.memberships.find((membership) => membership.tenant_id === tenant)
+    data.memberships.find(
+      (membership) =>
+        membership.tenant_id === tenant &&
+        membership.user_id === initialUserId,
+    )
       ?.role || "operator";
   const canManage = role === "admin";
   const qty = (id: string) =>

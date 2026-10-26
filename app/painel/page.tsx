@@ -8,5 +8,11 @@ export default async function Painel() {
   const auth = await session().catch(() => redirect("/login"));
   const data = await snapshot(auth.token);
 
-  return <StockApp initialData={data} initialEmail={auth.user.email} />;
+  return (
+    <StockApp
+      initialData={data}
+      initialEmail={auth.user.email}
+      initialUserId={auth.user.id}
+    />
+  );
 }
