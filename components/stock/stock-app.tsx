@@ -33,6 +33,9 @@ import {
   CalendarDays,
   Download,
   Send,
+  Mail,
+  TrendingUp,
+  Clock3,
   Check,
   MoreHorizontal,
   Pencil,
@@ -223,6 +226,9 @@ export default function StockApp({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [accountingOpen, setAccountingOpen] = useState(false);
+  const [accountingEmail, setAccountingEmail] = useState("");
+  const [accountingBusy, setAccountingBusy] = useState(false);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<{ role: string; text: string }[]>(
     [],
@@ -589,6 +595,61 @@ export default function StockApp({
         p.category_id === filter),
   );
   const totalUnits = products.reduce((s, p) => s + qty(p.id), 0);
+  const sixtyDaysAgo = Date.now() - 60 * 24 * 60 * 60 * 1000;
+  const abcRows = products
+    .map((product) => {
+      const sales = movements
+        .filter(
+          (movement) =>
+            movement.product_id === product.id &&
+            movement.type === "saida" &&
+            new Date(movement.created_at).getTime() >= sixtyDaysAgo,
+        )
+        .reduce((sum, movement) => sum + Number(movement.quantity), 0);
+      const profit = sales * (Number(product.sale_price) - Number(product.cost_price));
+      const currentQty = qty(product.id);
+      const lastSale = movements
+        .filter(
+          (movement) =>
+            movement.product_id === product.id && movement.type === "saida",
+        )
+        .reduce(
+          (latest, movement) =>
+            Math.max(latest, new Date(movement.created_at).getTime()),
+          0,
+        );
+      return { product, sales, profit, currentQty, lastSale };
+    })
+    .sort((a, b) => b.profit - a.profit);
+  const topProducts = abcRows.filter((row) => row.sales > 0).slice(0, 5);
+  const stagnantProducts = abcRows
+    .filter((row) => row.currentQty > 0 && row.lastSale < sixtyDaysAgo)
+    .sort((a, b) => b.currentQty * Number(b.product.cost_price) - a.currentQty * Number(a.product.cost_price))
+    .slice(0, 5);
+  async function sendAccountingReport(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAccountingBusy(true);
+    try {
+      const response = await fetch("/api/reports/accounting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenant_id: tenant,
+          location_id: location,
+          email: accountingEmail,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Não foi possível enviar o relatório.");
+      setAccountingOpen(false);
+      setAccountingEmail("");
+      setNotice("Fechamento enviado para o e-mail do contador.");
+    } catch (reportError) {
+      setError(reportError instanceof Error ? reportError.message : "Não foi possível enviar o relatório.");
+    } finally {
+      setAccountingBusy(false);
+    }
+  }
   function ProductTable({ compact = false }: { compact?: boolean }) {
     const rows = compact ? low.slice(0, 5) : visible;
     return (
@@ -885,6 +946,11 @@ export default function StockApp({
                   <button className="btn" onClick={exportData}>
                     <Download size={16} /> Exportar
                   </button>
+                  {canManage && (
+                    <button className="btn" onClick={() => setAccountingOpen(true)}>
+                      <Mail size={16} /> Enviar ao contador
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="stats-grid">
@@ -1060,6 +1126,49 @@ export default function StockApp({
                   </div>
                 </section>
               </div>
+              <section className="panel abc-panel">
+                <div className="panel-heading">
+                  <div>
+                    <h2>O que mais gira e o que está parado</h2>
+                    <p>Uma leitura simples dos últimos 60 dias, sem termos difíceis.</p>
+                  </div>
+                  <TrendingUp size={19} className="abc-heading-icon" />
+                </div>
+                <div className="abc-grid">
+                  <div className="abc-column">
+                    <div className="abc-column-title">
+                      <span className="abc-icon positive"><TrendingUp size={16} /></span>
+                      <div>
+                        <strong>Produtos que mais giram</strong>
+                        <small>Maior margem estimada nas vendas</small>
+                      </div>
+                    </div>
+                    {topProducts.length ? topProducts.map(({ product, sales, profit }) => (
+                      <div className="abc-row" key={product.id}>
+                        <span>{product.name}</span>
+                        <b>{number(sales)} saídas</b>
+                        <small>{money(profit)}</small>
+                      </div>
+                    )) : <p className="abc-empty">Ainda não há saídas registradas neste período.</p>}
+                  </div>
+                  <div className="abc-column stagnant">
+                    <div className="abc-column-title">
+                      <span className="abc-icon neutral"><Clock3 size={16} /></span>
+                      <div>
+                        <strong>Produtos parados há mais de 60 dias</strong>
+                        <small>Dinheiro parado na prateleira</small>
+                      </div>
+                    </div>
+                    {stagnantProducts.length ? stagnantProducts.map(({ product, currentQty }) => (
+                      <div className="abc-row" key={product.id}>
+                        <span>{product.name}</span>
+                        <b>{number(currentQty)} {product.unit}</b>
+                        <small>{money(currentQty * Number(product.cost_price))}</small>
+                      </div>
+                    )) : <p className="abc-empty">Nenhum produto parado por mais de 60 dias.</p>}
+                  </div>
+                </div>
+              </section>
               <div className="attention-banner">
                 <div className="attention-icon">
                   <TriangleAlert size={20} />
@@ -1628,6 +1737,40 @@ export default function StockApp({
           </footer>
         </main>
       </div>
+      <Dialog open={accountingOpen} onOpenChange={setAccountingOpen}>
+        <DialogContent className="stock-dialog accounting-dialog">
+          <DialogHeader>
+            <DialogTitle>Enviar fechamento para a contabilidade</DialogTitle>
+            <DialogDescription>
+              Vamos gerar o saldo e as movimentações deste mês em um arquivo CSV e enviar para o contador.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="stock-form" onSubmit={sendAccountingReport}>
+            <label>
+              E-mail do contador
+              <input
+                type="email"
+                required
+                value={accountingEmail}
+                onChange={(event) => setAccountingEmail(event.target.value)}
+                placeholder="contador@escritorio.com.br"
+              />
+            </label>
+            <p className="form-hint">
+              Unidade: {locations.find((item) => item.id === location)?.name || "Selecione uma unidade"}.
+            </p>
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setAccountingOpen(false)}>
+                Cancelar
+              </button>
+              <button className="btn primary" disabled={accountingBusy}>
+                <Send size={16} />
+                {accountingBusy ? "Enviando…" : "Gerar e enviar"}
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={!!modal}
         onOpenChange={(o) => {
