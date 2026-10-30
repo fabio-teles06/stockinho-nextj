@@ -742,6 +742,12 @@ export default function StockApp({
         }
       });
     }
+    function cancelSale() {
+      setCart([]);
+      setTapPendingOrder("");
+      setError("");
+      setNotice("Venda cancelada.");
+    }
     function openInfiniteTap() {
       if (!cartDetails.length || cartTotal < 1) {
         setError("O Checkout Tap exige uma venda de pelo menos R$ 1,00.");
@@ -1465,19 +1471,24 @@ export default function StockApp({
                     </label>
                   )}
                 </div>
-                {paymentMethod === "system" ? (
-                  <button className="btn primary cashier-confirm" disabled={busy || !cartDetails.length} onClick={() => confirmSale()}>
-                    Confirmar venda <Check size={17} />
+                <div className="cashier-actions">
+                  {paymentMethod === "system" ? (
+                    <button className="btn primary" disabled={busy || !cartDetails.length} onClick={() => confirmSale()}>
+                      Confirmar venda <Check size={17} />
+                    </button>
+                  ) : tapPendingOrder ? (
+                    <button className="btn primary" disabled={busy || !cartDetails.length} onClick={() => confirmSale(tapPendingOrder)}>
+                      Confirmar pagamento aprovado <Check size={17} />
+                    </button>
+                  ) : (
+                    <button className="btn primary" disabled={busy || !cartDetails.length} onClick={openInfiniteTap}>
+                      Abrir Checkout Tap <CreditCard size={17} />
+                    </button>
+                  )}
+                  <button className="btn" disabled={busy || !cartDetails.length} onClick={cancelSale}>
+                    Cancelar venda <X size={17} />
                   </button>
-                ) : tapPendingOrder ? (
-                  <button className="btn primary cashier-confirm" disabled={busy || !cartDetails.length} onClick={() => confirmSale(tapPendingOrder)}>
-                    Confirmar pagamento aprovado <Check size={17} />
-                  </button>
-                ) : (
-                  <button className="btn primary cashier-confirm" disabled={busy || !cartDetails.length} onClick={openInfiniteTap}>
-                    Abrir Checkout Tap <CreditCard size={17} />
-                  </button>
-                )}
+                </div>
               </div>
             </section>
           )}

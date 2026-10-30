@@ -2290,9 +2290,13 @@ td small {
   background: #fff;
   color: #3b5743;
 }
-.cashier-confirm {
-  width: calc(100% - 36px);
+.cashier-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
   margin: 0 18px 18px;
+}
+.cashier-actions .btn {
   justify-content: center;
 }
 @media (max-width: 900px) {
