@@ -30,6 +30,7 @@ export type Product = {
   sale_price: number;
   min_quantity: number;
   active: boolean;
+  image_url?: string | null;
 };
 export type Balance = {
   tenant_id: string;

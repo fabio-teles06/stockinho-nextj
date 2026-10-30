@@ -9,17 +9,29 @@ create table public.sk_memberships(id uuid primary key default gen_random_uuid()
 create index sk_memberships_user on public.sk_memberships(user_id,tenant_id);
 create table public.sk_locations(id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.sk_companies(id),name text not null check(length(trim(name)) between 1 and 150),type text not null check(type in ('Loja','Depósito')),address text not null default '',unique(tenant_id,id));
 create table public.sk_categories(id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.sk_companies(id),name text not null check(length(trim(name)) between 1 and 150),color text not null default '#179c72' check(color ~ '^#[0-9a-fA-F]{6}$'),unique(tenant_id,id),unique(tenant_id,name));
-create table public.sk_products(id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.sk_companies(id),category_id uuid not null,name text not null check(length(trim(name)) between 1 and 150),barcode text not null default '',unit text not null check(unit in ('un','kg','L','cx')),cost_price numeric(14,2) not null default 0 check(cost_price>=0),sale_price numeric(14,2) not null default 0 check(sale_price>=0),min_quantity numeric(14,2) not null default 0 check(min_quantity>=0),active boolean not null default true,unique(tenant_id,id),foreign key(tenant_id,category_id) references public.sk_categories(tenant_id,id));
+create table public.sk_products(id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.sk_companies(id),category_id uuid not null,name text not null check(length(trim(name)) between 1 and 150),barcode text not null default '',unit text not null check(unit in ('un','kg','L','cx')),cost_price numeric(14,2) not null default 0 check(cost_price>=0),sale_price numeric(14,2) not null default 0 check(sale_price>=0),min_quantity numeric(14,2) not null default 0 check(min_quantity>=0),image_url text,active boolean not null default true,unique(tenant_id,id),foreign key(tenant_id,category_id) references public.sk_categories(tenant_id,id));
 create unique index sk_products_barcode on public.sk_products(tenant_id,barcode) where barcode<>'';
 create index sk_products_category on public.sk_products(tenant_id,category_id);
 create table public.sk_balances(id uuid primary key default gen_random_uuid(),tenant_id uuid not null,product_id uuid not null,location_id uuid not null,quantity numeric(14,2) not null default 0 check(quantity>=0),unique(tenant_id,product_id,location_id),foreign key(tenant_id,product_id) references public.sk_products(tenant_id,id),foreign key(tenant_id,location_id) references public.sk_locations(tenant_id,id));
 create table public.sk_movements(id uuid primary key default gen_random_uuid(),tenant_id uuid not null,product_id uuid not null,location_id uuid not null,type text not null check(type in ('entrada','saida')),quantity numeric(14,2) not null check(quantity>0),reason text not null check(reason in ('Compra','Venda','Ajuste inicial','Devolução','Perda','Ajuste de inventário')),note text not null default '' check(length(note)<=500),created_by uuid not null references auth.users(id),created_at timestamptz not null default now(),foreign key(tenant_id,product_id) references public.sk_products(tenant_id,id),foreign key(tenant_id,location_id) references public.sk_locations(tenant_id,id));
 create index sk_movements_tenant_date on public.sk_movements(tenant_id,location_id,created_at desc);
 create index sk_movements_product on public.sk_movements(tenant_id,product_id);
+create table public.sk_sales(id uuid primary key default gen_random_uuid(),tenant_id uuid not null references public.sk_companies(id),location_id uuid not null,subtotal numeric(14,2) not null check(subtotal>=0),payment_method text not null check(payment_method in ('system','credit','debit')),installments integer not null default 1 check(installments between 1 and 12),external_order_id text,created_by uuid not null references auth.users(id),created_at timestamptz not null default now(),foreign key(tenant_id,location_id) references public.sk_locations(tenant_id,id));
+create table public.sk_sale_items(id uuid primary key default gen_random_uuid(),sale_id uuid not null references public.sk_sales(id) on delete cascade,tenant_id uuid not null,product_id uuid not null,quantity numeric(14,2) not null check(quantity>0),unit_price numeric(14,2) not null check(unit_price>=0),foreign key(tenant_id,product_id) references public.sk_products(tenant_id,id));
+alter table public.sk_sales enable row level security;
+alter table public.sk_sale_items enable row level security;
+revoke all on public.sk_sales,public.sk_sale_items from anon,authenticated;
+grant select on public.sk_sales,public.sk_sale_items to authenticated;
 -- Consulta de associação interna: evita recursão RLS e não usa metadados editáveis.
 create function stockinho_private.member(t uuid,admin_only boolean default false) returns boolean language sql stable security definer set search_path='' as $$
 select auth.uid() is not null and exists(select 1 from public.sk_memberships where tenant_id=t and user_id=auth.uid() and (not admin_only or role='admin'));
 $$;
+create policy sale_read on public.sk_sales for select to authenticated using(stockinho_private.member(tenant_id));
+create policy sale_item_read on public.sk_sale_items for select to authenticated using(stockinho_private.member(tenant_id));
+insert into storage.buckets(id,name,public) values('product-images','product-images',true) on conflict(id) do update set public=true;
+create policy product_image_read on storage.objects for select to public using(bucket_id='product-images');
+create policy product_image_write on storage.objects for insert to authenticated with check(bucket_id='product-images' and stockinho_private.member((split_part(name,'/',1))::uuid,true));
+create policy product_image_update on storage.objects for update to authenticated using(bucket_id='product-images' and stockinho_private.member((split_part(name,'/',1))::uuid,true));
 revoke all on function stockinho_private.member(uuid,boolean) from public;
 grant execute on function stockinho_private.member(uuid,boolean) to authenticated;
 alter table public.sk_companies enable row level security;
@@ -75,6 +87,27 @@ update public.sk_balances set quantity=quantity+case when p_type='entrada' then 
 insert into public.sk_movements(tenant_id,product_id,location_id,type,quantity,reason,note,created_by) values(p_tenant,p_product,p_location,p_type,p_quantity,p_reason,coalesce(p_note,''),auth.uid()) returning id into movement_id;
 return movement_id;end$$;
 create function public.stockinho_move(p_tenant uuid,p_product uuid,p_location uuid,p_type text,p_quantity numeric,p_reason text,p_note text default '') returns uuid language sql security invoker set search_path='' as $$select stockinho_private.move(p_tenant,p_product,p_location,p_type,p_quantity,p_reason,p_note)$$;
+create function stockinho_private.sale(p_tenant uuid,p_location uuid,p_payment_method text,p_installments integer,p_external_order_id text,p_items jsonb) returns uuid language plpgsql security definer set search_path='' as $$declare sale_id uuid;item jsonb;product_row record;total numeric:=0;qty numeric;begin
+if auth.uid() is null or not stockinho_private.member(p_tenant) then raise exception 'Empresa não autorizada';end if;
+if p_payment_method not in ('system','credit','debit') or p_installments<1 or p_installments>12 then raise exception 'Pagamento inválido';end if;
+if not exists(select 1 from public.sk_locations where id=p_location and tenant_id=p_tenant) then raise exception 'Unidade não autorizada';end if;
+if jsonb_typeof(p_items)<>'array' or jsonb_array_length(p_items)=0 then raise exception 'O carrinho está vazio';end if;
+for item in select * from jsonb_array_elements(p_items) loop
+select p.sale_price into product_row from public.sk_products p where p.id=(item->>'product_id')::uuid and p.tenant_id=p_tenant and p.active for update;
+if not found then raise exception 'Produto inválido ou arquivado';end if;
+qty:=(item->>'quantity')::numeric;
+if qty is null or qty<=0 or qty<>round(qty,2) then raise exception 'Quantidade inválida';end if;
+total:=total+(product_row.sale_price*qty);
+end loop;
+insert into public.sk_sales(tenant_id,location_id,subtotal,payment_method,installments,external_order_id,created_by) values(p_tenant,p_location,total,p_payment_method,p_installments,p_external_order_id,auth.uid()) returning id into sale_id;
+for item in select * from jsonb_array_elements(p_items) loop
+qty:=(item->>'quantity')::numeric;
+select sale_price into product_row from public.sk_products where id=(item->>'product_id')::uuid and tenant_id=p_tenant;
+perform stockinho_private.move(p_tenant,(item->>'product_id')::uuid,p_location,'saida',qty,'Venda','Venda '||sale_id::text);
+insert into public.sk_sale_items(sale_id,tenant_id,product_id,quantity,unit_price) values(sale_id,p_tenant,(item->>'product_id')::uuid,qty,product_row.sale_price);
+end loop;
+return sale_id;end$$;
+create function public.stockinho_sale(p_tenant uuid,p_location uuid,p_payment_method text,p_installments integer,p_external_order_id text,p_items jsonb) returns uuid language sql security invoker set search_path='' as $$select stockinho_private.sale(p_tenant,p_location,p_payment_method,p_installments,p_external_order_id,p_items)$$;
 create function stockinho_private.list_members(p_tenant uuid) returns table(id uuid,tenant_id uuid,user_id uuid,email text,role text) language sql security definer set search_path='' as $$select m.id,m.tenant_id,m.user_id,u.email,m.role from public.sk_memberships m join auth.users u on u.id=m.user_id where m.tenant_id=p_tenant and stockinho_private.member(p_tenant)$$;
 create function public.stockinho_list_members(p_tenant uuid) returns table(id uuid,tenant_id uuid,user_id uuid,email text,role text) language sql security invoker set search_path='' as $$select * from stockinho_private.list_members(p_tenant)$$;
 create function stockinho_private.add_member(p_tenant uuid,p_email text,p_role text) returns void language plpgsql security definer set search_path='' as $$declare member_id uuid;begin
@@ -86,8 +119,8 @@ if member_id=auth.uid() then raise exception 'Não é possível alterar seu pró
 insert into public.sk_memberships(tenant_id,user_id,role) values(p_tenant,member_id,p_role) on conflict(tenant_id,user_id) do update set role=excluded.role;
 end$$;
 create function public.stockinho_add_member(p_tenant uuid,p_email text,p_role text) returns void language sql security invoker set search_path='' as $$select stockinho_private.add_member(p_tenant,p_email,p_role)$$;
-revoke all on function stockinho_private.create_company(text),stockinho_private.move(uuid,uuid,uuid,text,numeric,text,text),stockinho_private.add_member(uuid,text,text),stockinho_private.fixed_tenant(),stockinho_private.archive_guard() from public;
+revoke all on function stockinho_private.create_company(text),stockinho_private.move(uuid,uuid,uuid,text,numeric,text,text),stockinho_private.sale(uuid,uuid,text,integer,text,jsonb),stockinho_private.add_member(uuid,text,text),stockinho_private.fixed_tenant(),stockinho_private.archive_guard() from public;
 revoke all on function stockinho_private.list_members(uuid),public.stockinho_list_members(uuid),public.stockinho_create_company(text),public.stockinho_move(uuid,uuid,uuid,text,numeric,text,text),public.stockinho_add_member(uuid,text,text) from public;
-grant execute on function stockinho_private.create_company(text),stockinho_private.move(uuid,uuid,uuid,text,numeric,text,text),stockinho_private.add_member(uuid,text,text) to authenticated;
+grant execute on function stockinho_private.create_company(text),stockinho_private.move(uuid,uuid,uuid,text,numeric,text,text),stockinho_private.sale(uuid,uuid,text,integer,text,jsonb),stockinho_private.add_member(uuid,text,text) to authenticated;
 grant execute on function stockinho_private.list_members(uuid),public.stockinho_list_members(uuid),public.stockinho_create_company(text),public.stockinho_move(uuid,uuid,uuid,text,numeric,text,text),public.stockinho_add_member(uuid,text,text) to authenticated;
 commit;

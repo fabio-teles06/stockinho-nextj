@@ -45,6 +45,8 @@ import {
   Leaf,
   X,
   SlidersHorizontal,
+  ShoppingCart,
+  CreditCard,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -109,6 +111,7 @@ import {
 } from "@/modules/stock/model";
 const nav = [
   ["Visão geral", LayoutDashboard],
+  ["Caixa", ShoppingCart],
   ["Produtos", Package],
   ["Movimentações", ArrowLeftRight],
   ["Categorias", Tags],
@@ -198,6 +201,7 @@ const titles: Record<string, string> = {
   Categorias: "Uma organização simples para encontrar tudo.",
   "Lojas e depósitos": "Cada unidade com seu estoque, tudo conectado.",
   "Assistente IA": "Respostas úteis para cuidar melhor do seu negócio.",
+  Caixa: "Registre vendas e finalize pagamentos com rapidez.",
   Configurações: "Organize sua empresa e suas preferências.",
   Ajuda: "Um jeito fácil de começar.",
 };
@@ -236,6 +240,10 @@ export default function StockApp({
   const [messages, setMessages] = useState<{ role: string; text: string }[]>(
     [],
   );
+  const [cart, setCart] = useState<{ product_id: string; quantity: number }[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<"system" | "credit" | "debit">("system");
+  const [installments, setInstallments] = useState(1);
+  const [tapPendingOrder, setTapPendingOrder] = useState("");
   const [user] = useState(initialEmail?.split("@")[0] || "Olá");
   useEffect(() => {
     if (notice) {
@@ -247,6 +255,15 @@ export default function StockApp({
   useEffect(() => {
     const timer = setTimeout(() => setAssistantTipOpen(false), 15000);
     return () => clearTimeout(timer);
+  }, []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("order_id");
+    if (params.get("tap_result") === "1" && orderId) {
+      setTapPendingOrder(orderId);
+      setView("Caixa");
+      window.history.replaceState({}, "", "/painel");
+    }
   }, []);
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
@@ -398,7 +415,7 @@ export default function StockApp({
   async function change(
     action: string,
     payload: any,
-  ) {
+  ): Promise<boolean> {
     setBusy(true);
     setError("");
     try {
@@ -419,13 +436,23 @@ export default function StockApp({
       setModal("");
       setDeleting(null);
       setNotice("Tudo certo! Alteração salva.");
+      return true;
     } catch (e: any) {
       setError(e.message);
+      return false;
     } finally {
       setBusy(false);
     }
   }
-  function save(e: FormEvent<HTMLFormElement>) {
+  function readImage(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Não foi possível ler a foto."));
+      reader.readAsDataURL(file);
+    });
+  }
+  async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.currentTarget));
     const id = edit?.id || uid();
@@ -441,6 +468,7 @@ export default function StockApp({
         sale_price: Number(f.sale_price),
         min_quantity: Number(f.min_quantity),
         active: true,
+        image_url: edit?.image_url || null,
       };
       if (!p.name || !p.category_id) {
         setError("Informe o nome e a categoria.");
@@ -454,7 +482,16 @@ export default function StockApp({
         setError("Este código de barras já está cadastrado.");
         return;
       }
-      change("product", { item: p });
+      const image = f.image;
+      let image_data: string | undefined;
+      try {
+        image_data =
+          image instanceof File && image.size ? await readImage(image) : undefined;
+      } catch (imageError) {
+        setError(imageError instanceof Error ? imageError.message : "Não foi possível ler a foto.");
+        return;
+      }
+      change("product", { item: p, image_data });
     }
     if (modal === "movement") {
       const quantity = Number(f.quantity),
@@ -661,6 +698,73 @@ export default function StockApp({
       setAccountingBusy(false);
     }
   }
+    const cartDetails = cart
+      .map((item) => {
+        const product = products.find((candidate) => candidate.id === item.product_id);
+        return product ? { ...item, product, total: item.quantity * Number(product.sale_price) } : null;
+      })
+      .filter((item): item is { product_id: string; quantity: number; product: Product; total: number } => Boolean(item));
+    const cartTotal = cartDetails.reduce((sum, item) => sum + item.total, 0);
+    function addToCart(product: Product) {
+      if (qty(product.id) <= 0) {
+        setError("Este produto está sem estoque.");
+        return;
+      }
+      setCart((items) => {
+        const existing = items.find((item) => item.product_id === product.id);
+        if (existing) {
+          return items.map((item) =>
+            item.product_id === product.id
+              ? { ...item, quantity: Math.min(item.quantity + 1, qty(product.id)) }
+              : item,
+          );
+        }
+        return [...items, { product_id: product.id, quantity: 1 }];
+      });
+    }
+    function confirmSale(externalOrderId?: string) {
+      if (!cartDetails.length) {
+        setError("Adicione pelo menos um produto ao carrinho.");
+        return;
+      }
+      change("sale", {
+        sale: {
+          location_id: location,
+          payment_method: paymentMethod,
+          installments: paymentMethod === "credit" ? installments : 1,
+          external_order_id: externalOrderId,
+          items: cartDetails.map(({ product_id, quantity }) => ({ product_id, quantity })),
+        },
+      }).then((success) => {
+        if (success) {
+          setCart([]);
+          setTapPendingOrder("");
+        }
+      });
+    }
+    function openInfiniteTap() {
+      if (!cartDetails.length || cartTotal < 1) {
+        setError("O Checkout Tap exige uma venda de pelo menos R$ 1,00.");
+        return;
+      }
+      if (paymentMethod === "system") {
+        setError("Selecione crédito ou débito para usar o Checkout Tap.");
+        return;
+      }
+      const orderId = uid();
+      setTapPendingOrder(orderId);
+      const params = new URLSearchParams({
+        amount: String(Math.round(cartTotal * 100)),
+        payment_method: paymentMethod,
+        installments: String(paymentMethod === "credit" ? installments : 1),
+        order_id: orderId,
+        result_url: `${window.location.origin}/painel?tap_result=1&order_id=${orderId}`,
+        app_client_referrer: "Stockinho",
+        af_force_deeplink: "true",
+      });
+      window.location.href = `infinitepaydash://infinitetap-app?${params.toString()}`;
+      setNotice("Checkout Tap aberto. Ao concluir o pagamento, volte e confirme a venda.");
+    }
   function ProductTable({ compact = false }: { compact?: boolean }) {
     const rows = compact ? low.slice(0, 5) : visible;
     return (
@@ -682,11 +786,13 @@ export default function StockApp({
               <TableRow key={p.id}>
                 <TableCell>
                   <div className="product-name">
-                    <span
-                      className={"product-icon cat-" + p.category_id.slice(-1)}
-                    >
-                      <Package size={19} />
-                    </span>
+                    {p.image_url ? (
+                      <img className="product-photo" src={p.image_url} alt="" />
+                    ) : (
+                      <span className={"product-icon cat-" + p.category_id.slice(-1)}>
+                        <Package size={19} />
+                      </span>
+                    )}
                     <div>
                       <strong>{p.name}</strong>
                       <small>{p.barcode || "Sem código de barras"}</small>
@@ -1297,6 +1403,84 @@ export default function StockApp({
               </div>
             </>
           )}
+          {view === "Caixa" && (
+            <section className="cashier-layout">
+              <div className="cashier-products panel">
+                <div className="panel-heading">
+                  <h2>Produtos para venda</h2>
+                  <div className="input-search">
+                    <Search size={18} />
+                    <input
+                      placeholder="Buscar produto"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="cashier-product-grid">
+                  {products
+                    .filter((product) => product.name.toLowerCase().includes(search.toLowerCase()) && qty(product.id) > 0)
+                    .map((product) => (
+                      <button className="cashier-product" key={product.id} onClick={() => addToCart(product)}>
+                        {product.image_url ? <img src={product.image_url} alt="" /> : <Package size={22} />}
+                        <strong>{product.name}</strong>
+                        <span>{money(Number(product.sale_price))} · {number(qty(product.id))} {product.unit}</span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+              <div className="cashier-cart panel">
+                <div className="panel-heading">
+                  <h2>Carrinho <span className="count-pill">{cartDetails.length}</span></h2>
+                  {cartDetails.length > 0 && <button className="text-button" onClick={() => setCart([])}>Limpar</button>}
+                </div>
+                <div className="cart-items">
+                  {cartDetails.map(({ product, quantity, product_id, total }) => (
+                    <div className="cart-item" key={product_id}>
+                      <div><strong>{product.name}</strong><small>{money(Number(product.sale_price))} cada</small></div>
+                      <div className="cart-quantity">
+                        <button onClick={() => setCart((items) => items.map((item) => item.product_id === product_id ? { ...item, quantity: item.quantity - 1 } : item).filter((item) => item.quantity > 0))}>−</button>
+                        <span>{quantity}</span>
+                        <button onClick={() => addToCart(product)}>+</button>
+                      </div>
+                      <b>{money(total)}</b>
+                    </div>
+                  ))}
+                  {!cartDetails.length && <div className="empty"><ShoppingCart /><p>Adicione produtos para começar a venda.</p></div>}
+                </div>
+                <div className="cashier-total"><span>Total</span><strong>{money(cartTotal)}</strong></div>
+                <div className="payment-options">
+                  <label>Modo de confirmação
+                    <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as "system" | "credit" | "debit")}>
+                      <option value="system">Salvar venda no sistema</option>
+                      <option value="credit">Checkout Tap · Crédito</option>
+                      <option value="debit">Checkout Tap · Débito</option>
+                    </select>
+                  </label>
+                  {paymentMethod === "credit" && (
+                    <label>Parcelas
+                      <select value={installments} onChange={(e) => setInstallments(Number(e.target.value))}>
+                        {Array.from({ length: Math.min(12, Math.floor(cartTotal)) }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}x</option>)}
+                      </select>
+                    </label>
+                  )}
+                </div>
+                {paymentMethod === "system" ? (
+                  <button className="btn primary cashier-confirm" disabled={busy || !cartDetails.length} onClick={() => confirmSale()}>
+                    Confirmar venda <Check size={17} />
+                  </button>
+                ) : tapPendingOrder ? (
+                  <button className="btn primary cashier-confirm" disabled={busy || !cartDetails.length} onClick={() => confirmSale(tapPendingOrder)}>
+                    Confirmar pagamento aprovado <Check size={17} />
+                  </button>
+                ) : (
+                  <button className="btn primary cashier-confirm" disabled={busy || !cartDetails.length} onClick={openInfiniteTap}>
+                    Abrir Checkout Tap <CreditCard size={17} />
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
           {view === "Produtos" && (
             <>
               <div className="list-toolbar">
@@ -1889,6 +2073,11 @@ export default function StockApp({
                     defaultValue={edit?.barcode}
                     placeholder="Digite o código de barras"
                   />
+                </label>
+                <label>
+                  Foto do produto
+                  <input name="image" type="file" accept="image/jpeg,image/png,image/webp" />
+                  <small className="form-hint">JPG, PNG ou WEBP, até 5 MB.</small>
                 </label>
                 <div className="form-grid">
                   <label>

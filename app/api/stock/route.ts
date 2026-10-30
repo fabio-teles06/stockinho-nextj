@@ -5,6 +5,7 @@ import {
   failure,
   sameOrigin,
   ApiError,
+  config,
 } from "@/lib/stock/server";
 import { z } from "zod";
 const id = z.string().uuid(),
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
         "category",
         "location",
         "movement",
+        "sale",
         "delete",
         "member",
       ])
@@ -52,7 +54,7 @@ export async function POST(req: Request) {
     );
     if (!memberships.length)
       throw new ApiError("Você não tem acesso a esta empresa.", 403);
-    if (action !== "movement" && memberships[0].role !== "admin")
+    if (!["movement", "sale"].includes(action) && memberships[0].role !== "admin")
       throw new ApiError(
         "Apenas administradores podem realizar esta ação.",
         403,
@@ -70,9 +72,29 @@ export async function POST(req: Request) {
           cost_price: num,
           sale_price: num,
           min_quantity: num,
+          image_url: z.string().url().max(1000).nullable().optional(),
           active: z.boolean(),
         })
         .parse(b.item);
+      if (b.image_data) {
+        const match = String(b.image_data).match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
+        if (!match || match[2].length > 7_000_000)
+          throw new ApiError("A foto deve ser JPG, PNG ou WEBP e ter no máximo 5 MB.");
+        const { url, key } = config();
+        const imagePath = `${tenant}/${item.id}.${match[1].split("/")[1]}`;
+        const upload = await fetch(`${url}/storage/v1/object/product-images/${imagePath}`, {
+          method: "POST",
+          headers: {
+            apikey: key,
+            Authorization: "Bearer " + token,
+            "Content-Type": match[1],
+            "x-upsert": "true",
+          },
+          body: Buffer.from(match[2], "base64"),
+        });
+        if (!upload.ok) throw new ApiError("Não foi possível salvar a foto do produto.", 502);
+        item.image_url = `${url}/storage/v1/object/public/product-images/${imagePath}`;
+      }
       table = "sk_products";
     }
     if (action === "category") {
@@ -137,6 +159,26 @@ export async function POST(req: Request) {
           p_quantity: item.quantity,
           p_reason: item.reason,
           p_note: item.note,
+        }),
+      });
+    }
+    if (action === "sale") {
+      const sale = z.object({
+        location_id: id,
+        payment_method: z.enum(["system", "credit", "debit"]),
+        installments: z.number().int().min(1).max(12),
+        external_order_id: z.string().max(100).optional(),
+        items: z.array(z.object({ product_id: id, quantity: num.positive() })).min(1).max(100),
+      }).parse(b.sale);
+      await supa("/rest/v1/rpc/stockinho_sale", token, {
+        method: "POST",
+        body: JSON.stringify({
+          p_tenant: tenant,
+          p_location: sale.location_id,
+          p_payment_method: sale.payment_method,
+          p_installments: sale.installments,
+          p_external_order_id: sale.external_order_id || null,
+          p_items: sale.items,
         }),
       });
     }

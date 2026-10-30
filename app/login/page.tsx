@@ -3,6 +3,13 @@ import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Package, Leaf, ArrowRight } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type AuthResponse = {
   configured?: boolean;
@@ -16,6 +23,10 @@ export default function Login() {
   const [signup, setSignup] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
+    [resetOpen, setResetOpen] = useState(false),
+    [resetBusy, setResetBusy] = useState(false),
+    [resetMessage, setResetMessage] = useState(""),
+    [resetSuccess, setResetSuccess] = useState(false),
     [configured, setConfigured] = useState<boolean | null>(null);
   useEffect(() => {
     fetch("/api/auth")
@@ -42,6 +53,32 @@ export default function Login() {
       setMessage(error instanceof Error ? error.message : "Erro inesperado.");
     } finally {
       setBusy(false);
+    }
+  }
+  async function submitReset(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setResetBusy(true);
+    setResetMessage("");
+    setResetSuccess(false);
+    try {
+      const f = Object.fromEntries(new FormData(e.currentTarget));
+      const r = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: f.email, action: "reset" }),
+      });
+      const d = (await r.json()) as AuthResponse;
+      if (!r.ok) throw Error(d.error || "Não foi possível enviar o reset.");
+      setResetSuccess(true);
+      setResetMessage(
+        d.message || "Confira seu e-mail para redefinir sua senha.",
+      );
+    } catch (error: unknown) {
+      setResetMessage(
+        error instanceof Error ? error.message : "Erro inesperado.",
+      );
+    } finally {
+      setResetBusy(false);
     }
   }
   return (
@@ -102,6 +139,19 @@ export default function Login() {
                 placeholder="Pelo menos 8 caracteres"
               />
             </label>
+            {!signup && (
+              <button
+                className="auth-forgot"
+                type="button"
+                onClick={() => {
+                  setResetOpen(true);
+                  setResetMessage("");
+                  setResetSuccess(false);
+                }}
+              >
+                Esqueci minha senha
+              </button>
+            )}
             {message && (
               <p className="form-error" role="status">
                 {message}
@@ -132,6 +182,53 @@ export default function Login() {
           </div>
         </div>
       </section>
+      <Dialog
+        open={resetOpen}
+        onOpenChange={(open) => {
+          setResetOpen(open);
+          if (!open) {
+            setResetMessage("");
+            setResetSuccess(false);
+          }
+        }}
+      >
+        <DialogContent className="stock-dialog auth-reset-dialog">
+          <DialogHeader>
+            <DialogTitle>Redefinir senha</DialogTitle>
+            <DialogDescription>
+              Informe seu e-mail e enviaremos um link para criar uma nova
+              senha.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="stock-form" onSubmit={submitReset}>
+            <label>
+              E-mail
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                placeholder="voce@seumercado.com.br"
+                disabled={resetBusy || resetSuccess}
+              />
+            </label>
+            {resetMessage && (
+              <p
+                className={resetSuccess ? "form-success" : "form-error"}
+                role="status"
+              >
+                {resetMessage}
+              </p>
+            )}
+            <button
+              className="btn primary"
+              disabled={resetBusy || resetSuccess || configured !== true}
+            >
+              {resetBusy ? "Enviando…" : "Enviar link de redefinição"}
+            </button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

@@ -20,12 +20,32 @@ export async function POST(req: Request) {
   try {
     sameOrigin(req);
     const b = z
-      .object({
-        email: z.string().email(),
-        password: z.string().min(8).max(128),
-        action: z.enum(["login", "signup"]),
-      })
+      .discriminatedUnion("action", [
+        z.object({
+          action: z.literal("reset"),
+          email: z.string().email(),
+        }),
+        z.object({
+          action: z.enum(["login", "signup"]),
+          email: z.string().email(),
+          password: z.string().min(8).max(128),
+        }),
+      ])
       .parse(await req.json());
+    if (b.action === "reset") {
+      const s = await supa("/auth/v1/recover", config().key, {
+        method: "POST",
+        body: JSON.stringify({ email: b.email }),
+      });
+      if (s?.error || s?.error_description || s?.msg)
+        throw new ApiError(
+          s.error_description || s.msg || s.error || "Não foi possível enviar o reset.",
+        );
+      return Response.json({
+        confirmation: true,
+        message: "Confira seu e-mail para redefinir sua senha.",
+      });
+    }
     const path =
       b.action === "signup"
         ? "/auth/v1/signup"
