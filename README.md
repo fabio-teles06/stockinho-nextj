@@ -18,6 +18,7 @@ Esta entrega acrescenta dois recursos funcionais ao controle de estoque: anális
 - Em Configurações, adicione a primeira empresa; em Lojas e depósitos, crie a primeira unidade. Crie categorias e produtos. Use uma entrada com motivo Ajuste inicial para informar o saldo.
 - Para adicionar funcionários, eles devem ter conta confirmada. Em Configurações, adicione o e-mail com papel Operador ou Administrador.
 - Para IA generativa, configure GEMINI_API_KEY e GEMINI_MODEL com um modelo disponível em sua conta. A chave fica apenas no servidor. Sem essas variáveis, o chat usa análises determinísticas e não finge chamar uma IA. Configure limites de consumo no provedor antes de disponibilizar amplamente.
+- Para cobrança, execute `database/migrations/20261030_billing.sql` depois do schema inicial e configure `ASAAS_API_KEY`, `ASAAS_ENVIRONMENT`, `ASAAS_WEBHOOK_TOKEN` e `SUPABASE_SERVICE_ROLE_KEY` somente no servidor. A chave `SUPABASE_SERVICE_ROLE_KEY` nunca deve ser publicada no navegador.
 - No Sites, configure as mesmas variáveis no ambiente do site; .env.local não é enviado. Nenhum projeto Supabase existente foi alterado nesta entrega.
 
 ## Execução
@@ -136,6 +137,7 @@ Esses comandos usam a dependência Next.js já declarada. A versão inicial vali
 - modules/stock/model.ts: contratos de dados e regras analíticas compartilhadas.
 - lib/stock/server.ts: sessões, cliente REST Supabase e consulta dos dados.
 - database/schema.sql: tabelas, relacionamentos, índices, permissões e funções transacionais.
+- database/migrations/20261030_billing.sql: planos, assinaturas, pagamentos, uso de IA, limites e eventos idempotentes.
 - database/DER.md: diagrama entidade-relacionamento atualizado, em Mermaid.
 - tests/: verificações das regras relevantes.
 
@@ -158,9 +160,23 @@ Todas as rotas abaixo são APIs próprias do projeto e usam JSON:
 | `/api/auth` | `GET`, `POST`, `DELETE` | Verifica configuração; cadastra/login com `{ email, password, action }`; encerra a sessão. |
 | `/api/stock` | `GET`, `POST` | Consulta o snapshot; mantém empresas, produtos, categorias, unidades, movimentações e membros. O POST recebe `{ action, tenant_id, item }`. |
 | `/api/chat` | `POST` | Consulta o estoque por `{ question, tenant_id, location_id }`, retornando `{ answer, mode }`. |
+| `/api/billing` | `GET`, `POST` | Lista planos/uso; inicia checkout Pro e cancela assinatura para administradores. |
+| `/api/webhooks/asaas` | `POST` | Recebe eventos autenticados do Asaas e atualiza pagamentos/assinaturas idempotentemente. |
 | `/api/health` | `GET` | Healthcheck JSON para publicação. |
 
 O cadastro é realizado pelo Supabase Auth, que armazena a senha somente como hash. A empresa usa dois perfis: `admin`, que pode manter cadastros e equipe, e `operator`, que consulta o estoque e registra movimentações. O servidor e as políticas RLS repetem essa restrição, portanto esconder botões não é a única barreira de acesso.
+
+## Cobrança Asaas
+
+1. No Asaas, crie uma conta Sandbox e copie a API key do ambiente Sandbox para `ASAAS_API_KEY`; use `ASAAS_ENVIRONMENT=sandbox`.
+2. Gere um token aleatório próprio para o webhook e configure `ASAAS_WEBHOOK_TOKEN`. Ele é diferente da API key.
+3. Configure `SUPABASE_SERVICE_ROLE_KEY` apenas no ambiente do servidor. Ela é usada para persistir eventos financeiros sem expor privilégios ao navegador.
+4. Registre `https://SEU_DOMINIO/api/webhooks/asaas` no painel do Asaas, enviando os eventos de assinatura e pagamento, incluindo `PAYMENT_CREATED`, `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_OVERDUE`, `PAYMENT_REFUNDED`, `PAYMENT_CHARGEBACK_REQUESTED`, `SUBSCRIPTION_UPDATED`, `SUBSCRIPTION_INACTIVATED` e `SUBSCRIPTION_DELETED`.
+5. Execute uma contratação em `/precos` usando o Sandbox. O Pro permanece pendente até `PAYMENT_CONFIRMED` ou `PAYMENT_RECEIVED`; uma página de sucesso não ativa o plano.
+
+O fluxo usa `POST /v3/subscriptions` com ciclo `MONTHLY` e `billingType=UNDEFINED`, permitindo que o Asaas disponibilize a cobrança do primeiro ciclo. O método de pagamento e a URL de pagamento são obtidos da cobrança criada pelo Asaas. A integração não armazena dados de cartão. O plano Pro Fundador permanece desabilitado em `sk_billing_settings` até uma decisão administrativa explícita; suas vagas são reservadas sob lock transacional.
+
+O cancelamento atual usa a operação de inativação do Asaas e remove os recursos pagos imediatamente, sem prometer reembolso automático. Atrasos ficam em `past_due` por três dias após o vencimento; reconciliação manual pode ser feita consultando a assinatura no Asaas e reentregando o evento ao webhook.
 
 ### Exemplos de chamadas
 

@@ -5,6 +5,7 @@ import {
   sameOrigin,
   ApiError,
 } from "@/lib/stock/server";
+import { billingSupa } from "@/lib/billing/server";
 import { analyze } from "@/modules/stock/model";
 import { z } from "zod";
 export async function POST(req: Request) {
@@ -26,6 +27,10 @@ export async function POST(req: Request) {
       )
     )
       throw new ApiError("Unidade não autorizada.", 403);
+    const remaining = await billingSupa("/rest/v1/rpc/stockinho_claim_ai_query", {
+      method: "POST",
+      body: JSON.stringify({ p_tenant: b.tenant_id }),
+    });
     const data = {
       ...all,
       companies: all.companies.filter((c) => c.id === b.tenant_id),
@@ -41,7 +46,7 @@ export async function POST(req: Request) {
     };
     const analysis = analyze(b.question, data, b.tenant_id, b.location_id);
     if (!process.env.GEMINI_API_KEY || !process.env.GEMINI_MODEL)
-      return Response.json({ answer: analysis, mode: "local" });
+      return Response.json({ answer: analysis, mode: "local", remaining });
     const compact = {
       products: data.products.map((p) => ({
         name: p.name,
@@ -56,7 +61,7 @@ export async function POST(req: Request) {
     };
     const context = JSON.stringify(compact);
     if (context.length > 60000)
-      return Response.json({ answer: analysis, mode: "local" });
+      return Response.json({ answer: analysis, mode: "local", remaining });
     try {
       const r = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/" +
@@ -105,13 +110,14 @@ export async function POST(req: Request) {
         ?.map((p: any) => p.text || "")
         .join("");
       if (!answer) throw Error("Resposta vazia");
-      return Response.json({ answer, mode: "ai" });
+      return Response.json({ answer, mode: "ai", remaining });
     } catch {
       return Response.json({
         answer:
           "A IA está indisponível no momento. Segue a análise local:\n\n" +
           analysis,
         mode: "local",
+        remaining,
       });
     }
   } catch (e) {

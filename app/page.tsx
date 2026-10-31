@@ -56,6 +56,7 @@ export default function Home() {
           <a href="#recursos">Recursos</a>
           <a href="#como-funciona">Como funciona</a>
           <a href="#beneficios">Benefícios</a>
+          <a href="/precos">Planos</a>
         </nav>
 
         
@@ -83,6 +84,7 @@ export default function Home() {
             <a href="#recursos" onClick={() => setMobileMenuOpen(false)}>Recursos</a>
             <a href="#como-funciona" onClick={() => setMobileMenuOpen(false)}>Como funciona</a>
             <a href="#beneficios" onClick={() => setMobileMenuOpen(false)}>Benefícios</a>
+            <a href="/precos">Planos</a>
             <a href="/login">Entrar</a>
           </div>
         )}

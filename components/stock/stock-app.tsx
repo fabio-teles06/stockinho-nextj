@@ -1938,6 +1938,10 @@ export default function StockApp({
                 <p>
                   Sua conta está conectada ao Supabase. Os dados são isolados por empresa e salvos na nuvem.
                 </p>
+                  <a className="btn" href="/configuracoes/assinatura">
+                    <CreditCard size={16} />
+                    Gerenciar assinatura
+                  </a>
                   <button
                     className="btn"
                     onClick={async () => {
