@@ -4351,3 +4351,4 @@ body {
     margin-left: 0;
   }
 }
+.billing-pending{display:grid;gap:12px;margin:16px 24px}.billing-management>.billing-pending{margin:0 0 16px}.billing-pending-invoice{display:flex;align-items:center;gap:16px;padding:18px;border:1px solid #efd29b;border-radius:12px;background:#fff8eb;color:#795315}.billing-pending-invoice>div{flex:1}.billing-pending-invoice p{margin:5px 0 0;font-size:13px}.billing-pending-invoice>a{flex-shrink:0;text-decoration:none}@media(max-width:650px){.billing-pending-invoice{flex-wrap:wrap}.billing-pending-invoice>a{width:100%}.billing-pending{margin:12px}}

@@ -70,6 +70,9 @@ export async function GET(req: Request) {
     return Response.json({
       plans: availablePlans,
       subscription,
+      pendingPayments: await billingSupa(
+        `/rest/v1/sk_billing_payments?organization_id=eq.${organizationId}&status=in.(PENDING,OVERDUE)&select=id,status,value,due_date,invoice_url&order=due_date.asc.nullslast,created_at.asc`,
+      ),
       usage: await usage(organizationId, plan),
       canManage: memberships[0].role === "admin",
     }, { headers: { "Cache-Control": "no-store" } });

@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, Check, CreditCard, LoaderCircle, X } from "lucide-react";
+import { PendingInvoices, type PendingPayment } from "./pending-invoices";
 
 type BillingPlan = { code: string; name: string; price: number };
 type BillingData = {
   plans: BillingPlan[];
+  pendingPayments: PendingPayment[];
   subscription: { status: string; sk_billing_plans?: BillingPlan } | null;
   usage: {
     products: { used: number; limit: number };
@@ -84,6 +86,7 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
   );
   return (
     <div className="billing-management">
+      <PendingInvoices payments={data.pendingPayments} />
       <section className="billing-panel billing-current">
         <div>
           <span className="billing-eyebrow">PLANO ATUAL</span>

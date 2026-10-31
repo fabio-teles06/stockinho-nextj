@@ -9,6 +9,7 @@ import {
   FormEvent,
 } from "react";
 import Link from "next/link";
+import PendingInvoiceNotice from "@/components/billing/pending-invoices";
 import { useRouter } from "next/navigation";
 import {
   Package,
@@ -994,6 +995,7 @@ export default function StockApp({
         </SidebarFooter>
       </Sidebar>
       <div className="app-body">
+        <PendingInvoiceNotice tenantId={tenant} />
         <header className="topbar">
           <div className="breadcrumb">
             <SidebarTrigger className="mobile-trigger" />
