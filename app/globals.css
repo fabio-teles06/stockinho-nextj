@@ -3678,6 +3678,300 @@ nav#menu>#container-fluid{
 
   }
 
+/* Ajustes finais da landing page para telas pequenas. Mantém o layout desktop intacto. */
+@media (max-width: 767px) {
+  .home-page {
+    overflow-x: hidden;
+  }
+
+  .home-header {
+    box-sizing: border-box;
+    width: calc(100% - 32px);
+    height: auto;
+    min-height: 68px;
+    padding: 14px 0;
+    gap: 10px;
+  }
+
+  .home-header nav {
+    display: none;
+  }
+
+  .home-header-actions {
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .home-header-actions .home-login {
+    display: none;
+  }
+
+  .home-header-actions .home-button {
+    min-height: 38px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-grid;
+    flex: 0 0 40px;
+  }
+
+  .home-hero {
+    box-sizing: border-box;
+    width: calc(100% - 32px);
+    min-height: 0;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 42px 0 64px;
+    text-align: center;
+  }
+
+  .hero-copy {
+    width: 100%;
+    margin: 0;
+  }
+
+  .home-kicker {
+    margin: 0 auto 22px;
+  }
+
+  .hero-copy h1 {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 0;
+    font-size: clamp(36px, 10vw, 52px);
+    letter-spacing: -2.4px;
+  }
+
+  .hero-copy > p {
+    max-width: 560px;
+    margin: 22px auto 0;
+    padding: 0;
+    font-size: 15px;
+  }
+
+  .hero-actions {
+    width: 100%;
+    margin: 28px auto 0;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .hero-actions .home-button {
+    width: 100%;
+  }
+
+  .hero-trust {
+    justify-content: center;
+    gap: 10px 16px;
+    margin: 24px auto 0;
+  }
+
+  .hero-visual {
+    width: 100%;
+    min-height: 300px;
+    margin: 0;
+  }
+
+  .dashboard-preview {
+    width: 100%;
+    height: 245px;
+    grid-template-columns: 42px minmax(0, 1fr);
+    border-width: 4px;
+    transform: none;
+  }
+
+  .preview-sidebar {
+    padding: 13px 8px;
+  }
+
+  .preview-logo {
+    margin-bottom: 28px;
+    font-size: 0;
+  }
+
+  .preview-top {
+    padding: 0 14px;
+  }
+
+  .preview-welcome {
+    padding: 14px;
+  }
+
+  .preview-welcome strong {
+    font-size: 16px;
+  }
+
+  .preview-stats {
+    padding: 0 14px;
+    gap: 5px;
+  }
+
+  .preview-stats > div {
+    padding: 7px;
+  }
+
+  .preview-stats b {
+    margin: 6px 0 4px;
+    font-size: 10px;
+  }
+
+  .preview-chart {
+    height: 90px;
+    margin: 8px 14px;
+    padding: 10px;
+  }
+
+  .preview-chart svg {
+    height: 65px;
+  }
+
+  .preview-alert,
+  .preview-scan {
+    min-width: 0;
+    max-width: 145px;
+    padding: 8px;
+  }
+
+  .preview-alert {
+    right: -4px;
+    top: 12px;
+  }
+
+  .preview-scan {
+    left: -4px;
+    bottom: 8px;
+  }
+
+  .home-features,
+  .home-steps,
+  .home-cta {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 64px 16px;
+  }
+
+  .section-heading {
+    margin-bottom: 36px;
+  }
+
+  .section-heading h2,
+  .steps-intro h2,
+  .benefit-card h2,
+  .home-cta h2 {
+    font-size: clamp(26px, 7vw, 34px);
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .feature-grid article {
+    padding: 26px 22px;
+  }
+
+  .feature-grid p {
+    min-height: 0;
+  }
+
+  .home-steps {
+    grid-template-columns: 1fr;
+    gap: 44px;
+  }
+
+  .steps-illustration {
+    display: none;
+  }
+
+  .home-benefit {
+    grid-template-columns: 1fr;
+  }
+
+  .benefit-card {
+    padding: 60px 22px;
+  }
+
+  .benefit-chat {
+    width: calc(100% - 32px);
+    box-sizing: border-box;
+    margin: 32px auto;
+    padding: 18px;
+  }
+
+  .home-cta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 28px;
+  }
+
+  .home-cta .home-button {
+    width: 100%;
+  }
+
+  .home-footer {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    padding: 44px 16px 26px;
+  }
+
+  .home-footer > div {
+    flex-wrap: wrap;
+    gap: 16px 24px;
+  }
+}
+
+@media (max-width: 380px) {
+  .home-header-actions .home-button {
+    max-width: 124px;
+    padding: 0 9px;
+    font-size: 10px;
+  }
+
+  .home-brand {
+    font-size: 20px;
+  }
+
+  .home-brand > span {
+    width: 32px;
+    height: 32px;
+    margin-right: 7px;
+  }
+
+  .hero-copy h1 {
+    font-size: 35px;
+    letter-spacing: -1.8px;
+  }
+
+  .hero-copy > p {
+    font-size: 14px;
+  }
+
+  .hero-trust {
+    align-items: flex-start;
+    flex-direction: column;
+    width: fit-content;
+  }
+
+  .dashboard-preview {
+    height: 225px;
+  }
+
+  .preview-welcome span,
+  .preview-stats small {
+    display: none;
+  }
+
+  .preview-chart {
+    height: 78px;
+  }
+
+  .preview-chart svg {
+    height: 52px;
+  }
+}
+
 
 
 
