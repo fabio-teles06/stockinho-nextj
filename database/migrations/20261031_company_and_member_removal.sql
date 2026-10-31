@@ -44,4 +44,6 @@ create or replace function public.stockinho_delete_company(p_tenant uuid)
 returns void language sql security invoker set search_path='' as $$select stockinho_private.delete_company(p_tenant)$$;
 revoke all on function stockinho_private.remove_member(uuid,uuid),stockinho_private.delete_company(uuid),public.stockinho_remove_member(uuid,uuid),public.stockinho_delete_company(uuid) from public;
 grant execute on function stockinho_private.remove_member(uuid,uuid),stockinho_private.delete_company(uuid),public.stockinho_remove_member(uuid,uuid),public.stockinho_delete_company(uuid) to authenticated;
+-- Atualiza as funções disponíveis na API REST após o commit.
+notify pgrst, 'reload schema';
 commit;

@@ -1423,6 +1423,7 @@ export default function StockApp({
                   <div className="input-search">
                     <Search size={18} />
                     <input
+                      aria-label="Buscar produto para venda"
                       placeholder="Buscar produto"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
@@ -1451,9 +1452,9 @@ export default function StockApp({
                     <div className="cart-item" key={product_id}>
                       <div><strong>{product.name}</strong><small>{money(Number(product.sale_price))} cada</small></div>
                       <div className="cart-quantity">
-                        <button onClick={() => setCart((items) => items.map((item) => item.product_id === product_id ? { ...item, quantity: item.quantity - 1 } : item).filter((item) => item.quantity > 0))}>−</button>
+                        <button aria-label={`Diminuir quantidade de ${product.name}`} onClick={() => setCart((items) => items.map((item) => item.product_id === product_id ? { ...item, quantity: item.quantity - 1 } : item).filter((item) => item.quantity > 0))}>−</button>
                         <span>{quantity}</span>
-                        <button onClick={() => addToCart(product)}>+</button>
+                        <button aria-label={`Aumentar quantidade de ${product.name}`} onClick={() => addToCart(product)}>+</button>
                       </div>
                       <b>{money(total)}</b>
                     </div>

@@ -4352,4 +4352,24 @@ body {
   }
 }
 .billing-pending{display:grid;gap:12px;margin:16px 24px}.billing-management>.billing-pending{margin:0 0 16px}.billing-pending-invoice{display:flex;align-items:center;gap:16px;padding:18px;border:1px solid #efd29b;border-radius:12px;background:#fff8eb;color:#795315}.billing-pending-invoice>div{flex:1}.billing-pending-invoice p{margin:5px 0 0;font-size:13px}.billing-pending-invoice>a{flex-shrink:0;text-decoration:none}@media(max-width:650px){.billing-pending-invoice{flex-wrap:wrap}.billing-pending-invoice>a{width:100%}.billing-pending{margin:12px}}
-.account-form{display:grid;gap:16px;max-width:460px;margin-top:24px}.account-form label{display:grid;gap:7px;font-weight:600}.account-form input{border:1px solid #d5e3d9;border-radius:8px;padding:11px;background:#fff;color:#214a38;width:100%}
+.account-form{display:grid;gap:20px;max-width:460px;margin-top:24px}.account-form label{display:grid;gap:7px;font-weight:600}.account-form input{border:1px solid #d5e3d9;border-radius:8px;padding:11px;background:#fff;color:#214a38;width:100%;min-height:44px;transition:border-color .15s,box-shadow .15s}
+.account-form input:focus-visible{border-color:#12805e;box-shadow:0 0 0 3px #12805e18}
+.account-form input[aria-invalid="true"]{border-color:#b42318;background:#fffafa}
+.field-hint,.field-error{font-size:12px;font-weight:400;line-height:1.5}
+.field-hint{color:#586c60}.field-error{color:#b42318}
+.account-form input:disabled{background:#f3f6f4;cursor:wait}
+.billing-panel>p{line-height:1.6}
+.billing-action{min-height:44px}
+.billing-checkout{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.billing-checkout>p{flex-basis:100%}
+@media(max-width:650px){
+  .billing-app-page{padding:24px 16px}
+  .billing-panel{padding:22px 18px}
+  .billing-panel h1{font-size:24px;line-height:1.2;margin-bottom:12px}
+  .billing-checkout .billing-action{width:100%}
+  .stock-form input,.stock-form select,.stock-form textarea,.account-form input,.input-search input,.chat-input input{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){
+  .spin{animation:none}
+  .account-form input{transition:none}
+}

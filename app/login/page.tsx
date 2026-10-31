@@ -20,6 +20,7 @@ type AuthResponse = {
 
 export default function Login() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
   const [signup, setSignup] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
@@ -117,7 +118,7 @@ export default function Login() {
               o responsável pela instalação para liberar o acesso.
             </p>
           )}
-          <form className="stock-form" onSubmit={submit}>
+          <form className="stock-form" onSubmit={submit} aria-busy={busy}>
             <label>
               E-mail
               <input
@@ -132,13 +133,18 @@ export default function Login() {
               Senha
               <input
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
+                id="login-password"
+                disabled={busy}
                 autoComplete={signup ? "new-password" : "current-password"}
                 required
-                minLength={8}
-                placeholder="Pelo menos 8 caracteres"
+                minLength={signup ? 8 : undefined}
+                placeholder={signup ? "Pelo menos 8 caracteres" : "Sua senha"}
               />
             </label>
+            <button type="button" className="auth-forgot" aria-controls="login-password" aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>
+              {showPassword ? "Ocultar senha" : "Mostrar senha"}
+            </button>
             {!signup && (
               <button
                 className="auth-forgot"
@@ -172,8 +178,10 @@ export default function Login() {
           <div className="auth-switch">
             {signup ? "Já tem uma conta?" : "Primeira vez aqui?"}{" "}
             <button
+              disabled={busy}
               onClick={() => {
                 setSignup(!signup);
+                setShowPassword(false);
                 setMessage("");
               }}
             >

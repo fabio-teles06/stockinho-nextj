@@ -73,11 +73,13 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
     }
   }
 
-  if (error && !data) return <section className="billing-panel"><p className="billing-error">{error}</p></section>;
-  if (!data) return <section className="billing-panel billing-loading"><LoaderCircle className="spin" /> Carregando assinatura...</section>;
+  if (error && !data) return <section className="billing-panel"><p className="billing-error" role="alert">{error}</p><button className="billing-action" onClick={() => { setError(""); void load(); }}>Tentar novamente</button></section>;
+  if (!data) return <section className="billing-panel billing-loading" role="status"><LoaderCircle className="spin" /> Carregando assinatura...</section>;
   const plan = data.subscription?.sk_billing_plans ?? data.plans.find((item) => item.code === "free");
   if (!plan) return <section className="billing-panel"><p className="billing-error">Os planos ainda não foram configurados.</p></section>;
   const paidPlan = plan.code !== "free";
+  const status = data.subscription?.status ?? "active";
+  const statusLabel: Record<string, string> = { active: "Ativa", pending: "Aguardando pagamento", past_due: "Pagamento em atraso", canceled: "Cancelada", expired: "Expirada", suspended: "Suspensa" };
   const active = paidPlan && (
     data.subscription?.status === "active" ||
     data.subscription?.status === "past_due"
@@ -89,12 +91,12 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
         <div>
           <span className="billing-eyebrow">PLANO ATUAL</span>
           <h1>{plan.name}</h1>
-          <p>{active ? "Sua assinatura está ativa." : data.subscription?.status === "pending" ? "Aguardando confirmação do pagamento." : "Recursos básicos disponíveis."}</p>
+          <p>{status === "past_due" ? "Existe um pagamento em atraso. Confira suas cobranças." : active ? "Sua assinatura está ativa." : status === "pending" ? "Aguardando confirmação do pagamento." : "Recursos básicos disponíveis."}</p>
         </div>
         <strong className="billing-current-price">R$ {Number(plan.price).toFixed(2).replace(".", ",")}<small>/mês</small></strong>
-        <span className={"billing-status " + (active ? "active" : "")}>{data.subscription?.status ?? "active"}</span>
+        <span className={"billing-status " + (status === "active" ? "active" : "")}>{statusLabel[status] ?? "Em processamento"}</span>
       </section>
-      {error && <p className="billing-error">{error}</p>}
+      {error && <p role="alert" className="billing-error">{error}</p>}
       <section className="billing-usage-grid">
         {[
           ["Produtos ativos", data.usage.products.used, data.usage.products.limit],
@@ -111,7 +113,7 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
         <section className="billing-panel billing-actions-panel">
           {plan.code === "free" && (
             <div className="billing-checkout">
-              <p>Usaremos os dados salvos na sua conta para a cobran?a.</p>
+              <p>Usaremos os dados salvos na sua conta para a cobrança.</p>
               <a className="billing-action" href="/configuracoes/conta">Configurar dados da conta</a>
               <button className="billing-action primary" disabled={busy} onClick={checkout}>
                 {busy ? <LoaderCircle className="spin" /> : <CreditCard size={16} />} Fazer upgrade para Pro <ArrowRight size={16} />

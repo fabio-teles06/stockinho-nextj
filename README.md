@@ -12,6 +12,10 @@ Esta entrega acrescenta dois recursos funcionais ao controle de estoque: anális
 
 ## Configurar o Supabase
 
+Depois do schema inicial, aplique também as migrações de `database/migrations` em ordem pelo nome. A publicação da aplicação não executa esses arquivos automaticamente.
+
+Se a exclusão de empresas retornar 404 em `/rest/v1/rpc/stockinho_delete_company`, execute o conteúdo de [20261031_company_and_member_removal.sql](database/migrations/20261031_company_and_member_removal.sql) no SQL Editor do mesmo projeto Supabase configurado na aplicação. Essa migração pode ser reaplicada: cria ou atualiza as funções de exclusão de empresas e remoção de membros e solicita a atualização do cache da API. Executar a migração apenas instala as funções; a exclusão acontece quando um administrador a solicita na aplicação.
+
 - Use um projeto Supabase dedicado. Execute database/schema.sql uma vez no SQL Editor.
 - Copie .env.example para .env.local, preenchendo SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY. Não use service_role.
 - Habilite autenticação por e-mail/senha. Configure Site URL e URLs de redirecionamento com o endereço da aplicação. Confirme seu e-mail e faça login em /login.
