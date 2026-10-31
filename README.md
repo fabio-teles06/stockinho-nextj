@@ -176,6 +176,8 @@ O cadastro é realizado pelo Supabase Auth, que armazena a senha somente como ha
 
 Se `/configuracoes/assinatura` mostrar “tabelas de cobrança não foram encontradas”, a migration ainda não foi executada no mesmo projeto Supabase usado por `SUPABASE_URL`. Cole o conteúdo de `database/migrations/20261030_billing.sql` no SQL Editor e execute uma vez; depois reinicie o servidor.
 
+Se o log mostrar `permission denied for schema stockinho_private` ao iniciar o checkout, execute também `database/migrations/20261030_billing_permissions.sql` no mesmo projeto Supabase. Essa migration corrige a permissão dos wrappers RPC sem expor o schema interno.
+
 O fluxo usa `POST /v3/subscriptions` com ciclo `MONTHLY` e `billingType=UNDEFINED`, permitindo que o Asaas disponibilize a cobrança do primeiro ciclo. O método de pagamento e a URL de pagamento são obtidos da cobrança criada pelo Asaas. A integração não armazena dados de cartão. O plano Pro Fundador permanece desabilitado em `sk_billing_settings` até uma decisão administrativa explícita; suas vagas são reservadas sob lock transacional.
 
 O cancelamento atual usa a operação de inativação do Asaas e remove os recursos pagos imediatamente, sem prometer reembolso automático. Atrasos ficam em `past_due` por três dias após o vencimento; reconciliação manual pode ser feita consultando a assinatura no Asaas e reentregando o evento ao webhook.

@@ -136,7 +136,8 @@ export function sameSecret(received: string | null, expected: string | undefined
 export function billingIdempotencyKey(organizationId: string, planCode: string) {
   return createHash("sha256")
     .update(`${organizationId}:${planCode}`)
-    .digest("hex");
+    .digest("hex")
+    .slice(0, 48);
 }
 
 export async function assertAdmin(token: string, userId: string, tenantId: string) {

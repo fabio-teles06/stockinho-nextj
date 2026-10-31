@@ -164,7 +164,7 @@ end
 $$;
 create or replace function public.stockinho_claim_billing_checkout(p_tenant uuid,p_plan_code text)
 returns table(claimed boolean,subscription_id uuid,provider_subscription_id text,reason text)
-language sql security invoker set search_path=''
+language sql security definer set search_path=''
 as $$ select * from stockinho_private.claim_billing_checkout(p_tenant,p_plan_code) $$;
 
 create or replace function stockinho_private.claim_ai_query(p_tenant uuid)
@@ -187,7 +187,7 @@ begin
 end
 $$;
 create or replace function public.stockinho_claim_ai_query(p_tenant uuid)
-returns integer language sql security invoker set search_path=''
+returns integer language sql security definer set search_path=''
 as $$ select stockinho_private.claim_ai_query(p_tenant) $$;
 
 create or replace function stockinho_private.enforce_member_limit()
@@ -312,6 +312,8 @@ revoke all on public.sk_billing_plans,public.sk_billing_customers,public.sk_bill
   public.sk_billing_settings from anon,authenticated;
 grant select on public.sk_billing_plans to authenticated;
 revoke all on function stockinho_private.claim_billing_checkout(uuid,text) from public;
+revoke all on function public.stockinho_claim_billing_checkout(uuid,text) from public;
+revoke all on function public.stockinho_claim_ai_query(uuid) from public;
 grant execute on function public.stockinho_claim_billing_checkout(uuid,text) to service_role;
 grant execute on function public.stockinho_claim_ai_query(uuid) to service_role;
 
