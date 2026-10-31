@@ -4,19 +4,19 @@ import { billingSupa, sameSecret } from "@/lib/billing/server";
 const eventSchema = z.object({
   id: z.string().min(1),
   event: z.string().min(1),
-  dateCreated: z.string().optional(),
-  subscription: z.object({ id: z.string() }).passthrough().optional(),
+  dateCreated: z.string().nullish(),
+  subscription: z.object({ id: z.string() }).passthrough().nullish(),
   payment: z.object({
     id: z.string(),
-    subscription: z.string().optional(),
-    status: z.string().optional(),
-    value: z.number().optional(),
-    dueDate: z.string().optional(),
-    paymentDate: z.string().optional(),
-    invoiceUrl: z.string().optional(),
-    bankSlipUrl: z.string().optional(),
-    billingType: z.string().optional(),
-  }).passthrough().optional(),
+    subscription: z.string().nullish(),
+    status: z.string().nullish(),
+    value: z.number().nullish(),
+    dueDate: z.string().nullish(),
+    paymentDate: z.string().nullish(),
+    invoiceUrl: z.string().nullish(),
+    bankSlipUrl: z.string().nullish(),
+    billingType: z.string().nullish(),
+  }).passthrough().nullish(),
 }).passthrough();
 
 export async function POST(req: Request) {
