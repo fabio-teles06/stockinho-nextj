@@ -71,7 +71,11 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
   if (!data) return <section className="billing-panel billing-loading"><LoaderCircle className="spin" /> Carregando assinatura...</section>;
   const plan = data.subscription?.sk_billing_plans ?? data.plans.find((item) => item.code === "free");
   if (!plan) return <section className="billing-panel"><p className="billing-error">Os planos ainda não foram configurados.</p></section>;
-  const active = data.subscription?.status === "active";
+  const paidPlan = plan.code !== "free";
+  const active = paidPlan && (
+    data.subscription?.status === "active" ||
+    data.subscription?.status === "past_due"
+  );
   return (
     <div className="billing-management">
       <section className="billing-panel billing-current">
@@ -98,7 +102,7 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
       </section>
       {data.canManage && (
         <section className="billing-panel billing-actions-panel">
-          {!active && plan.code === "free" && <button className="billing-action primary" disabled={busy} onClick={checkout}>{busy ? <LoaderCircle className="spin" /> : <CreditCard size={16} />} Fazer upgrade para Pro <ArrowRight size={16} /></button>}
+          {plan.code === "free" && <button className="billing-action primary" disabled={busy} onClick={checkout}>{busy ? <LoaderCircle className="spin" /> : <CreditCard size={16} />} Fazer upgrade para Pro <ArrowRight size={16} /></button>}
           {active && <button className="billing-action danger" disabled={busy} onClick={cancel}>{busy ? <LoaderCircle className="spin" /> : <X size={16} />} Cancelar assinatura</button>}
           <p><Check size={15} /> O Pro só libera recursos depois da confirmação financeira do Asaas.</p>
         </section>

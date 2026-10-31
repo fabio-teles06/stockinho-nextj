@@ -85,8 +85,11 @@ export async function POST(req: Request) {
     await assertAdmin(token, user.id, body.tenant_id);
     if (body.action === "cancel") {
       const current = (await billingSupa(
-        `/rest/v1/sk_billing_subscriptions?organization_id=eq.${body.tenant_id}&select=id,provider_subscription_id,status`,
+        `/rest/v1/sk_billing_subscriptions?organization_id=eq.${body.tenant_id}&select=id,provider_subscription_id,status,sk_billing_plans(code)`,
       ))[0];
+      if (current?.sk_billing_plans?.code === "free") {
+        throw new ApiError("A empresa está no plano Free e não possui assinatura paga.", 409);
+      }
       if (!current?.provider_subscription_id) {
         return Response.json({ ok: true, message: "Não há cobrança recorrente ativa." });
       }
