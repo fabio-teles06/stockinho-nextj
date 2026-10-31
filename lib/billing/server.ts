@@ -62,9 +62,25 @@ export async function billingSupa(
     console.error("[billing] Supabase request failed", {
       path,
       status: response.status,
+      code: body?.code,
       message: body?.message,
     });
-    throw new ApiError("Não foi possível consultar os dados de cobrança.", 502);
+    if (response.status === 404) {
+      throw new ApiError(
+        "As tabelas de cobrança não foram encontradas. Execute a migration database/migrations/20261030_billing.sql no Supabase.",
+        503,
+      );
+    }
+    if (response.status === 401 || response.status === 403) {
+      throw new ApiError(
+        "A chave de serviço do Supabase não foi aceita. Verifique SUPABASE_SERVICE_ROLE_KEY no servidor.",
+        503,
+      );
+    }
+    throw new ApiError(
+      "Não foi possível consultar os dados de cobrança. Verifique os logs do servidor.",
+      502,
+    );
   }
   return body;
 }
