@@ -21,7 +21,7 @@ test("scanner decodes EAN-13 and internal Code 128 labels from generated image p
       x += size * 3;
     });
     const source = new RGBLuminanceSource(pixels, width, height);
-    const result = createCameraReader().decodeBitmap(new BinaryBitmap(new HybridBinarizer(source)));
+    const result = createCameraReader("barcode").decodeBitmap(new BinaryBitmap(new HybridBinarizer(source)));
     assert.equal(result.getText(), text);
   }
 });
@@ -44,7 +44,7 @@ test("scanner decodes internal QR labels from generated image pixels", () => {
     }
   }
   const source = new RGBLuminanceSource(pixels, size, size);
-  const result = createCameraReader().decodeBitmap(new BinaryBitmap(new HybridBinarizer(source)));
+  const result = createCameraReader("qr").decodeBitmap(new BinaryBitmap(new HybridBinarizer(source)));
   assert.equal(result.getText(), text);
 });
 
@@ -68,7 +68,8 @@ function setup() {
       },
     },
   };
-  const start = () => startCameraScanner(video, {
+  const start = (mode) => startCameraScanner(video, {
+    mode,
     onResult: (value) => state.results.push(value),
     onError: (message) => state.errors.push(message),
     onReady: () => state.ready++,
@@ -83,6 +84,7 @@ test("camera requests rear-facing HD video and accepts only one result per sessi
   assert.equal(state.constraints.audio, false);
   assert.deepEqual(state.constraints.video, {
     facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 },
+    aspectRatio: { ideal: 16 / 9 },
   });
   assert.equal(state.ready, 1);
   state.callback(undefined, new NotFoundException());
@@ -93,6 +95,17 @@ test("camera requests rear-facing HD video and accepts only one result per sessi
   assert.equal(state.trackStops, 1);
   assert.equal(state.readerStops, 1);
   assert.equal(video.srcObject, null);
+});
+
+test("QR mode requests a portrait camera frame", async () => {
+  const { state, start } = setup();
+  const stop = start("qr");
+  await tick();
+  assert.deepEqual(state.constraints.video, {
+    facingMode: { ideal: "environment" }, width: { ideal: 1080 }, height: { ideal: 1440 },
+    aspectRatio: { ideal: 3 / 4 },
+  });
+  stop();
 });
 
 test("closing while permission is pending releases the late stream without starting decoding", async () => {

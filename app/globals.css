@@ -2198,6 +2198,11 @@ td small {
   gap: 10px;
   padding: 18px;
 }
+.cashier-scanner { display: grid; gap: 12px; padding: 0 18px 18px; border-bottom: 1px solid var(--border); }
+.cashier-scanner-form { display: grid; gap: 8px; }
+.cashier-scanner-form label { font-size: 14px; font-weight: 600; }
+.cashier-scanner-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cashier-scanner-actions input { flex: 1 1 220px; min-width: 0; min-height: 42px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--background); }
 .cashier-product {
   display: grid;
   gap: 7px;
@@ -3387,6 +3392,14 @@ body {
 .operation-table-scroll th,.operation-table-scroll td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border,#e3e8e5); min-width: 95px; }
 .operation-table-scroll input { min-width: 100px; }
 .scanner-video { width: 100%; max-height: 340px; background: #111; border-radius: 10px; }
+.scanner-camera { display: grid; gap: 12px; }
+.scanner-modes { display: flex; flex-wrap: wrap; gap: 8px; }
+.scanner-frame { position: relative; width: 100%; overflow: hidden; border-radius: 10px; background: #111; }
+.scanner-frame--barcode { aspect-ratio: 16 / 9; }
+.scanner-frame--qr { aspect-ratio: 3 / 4; max-width: 360px; margin-inline: auto; }
+.scanner-frame .scanner-video { display: block; width: 100%; height: 100%; max-height: none; object-fit: contain; }
+.scanner-guide { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 84%; height: 48%; border: 2px solid #fff; border-radius: 8px; box-shadow: 0 0 0 100vmax #0004; pointer-events: none; }
+.scanner-frame--qr .scanner-guide { width: 76%; height: auto; aspect-ratio: 1; }
 .purchase-line { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; align-items: end; }
 .purchase-receipt { border-top: 1px solid var(--border,#e3e8e5); padding-top: 16px; }
 .inline-check,.operation-card .inline-check { display: flex; gap: 9px; align-items: center; padding: 8px 0; }

@@ -13,6 +13,8 @@ import PendingInvoiceNotice from "@/components/billing/pending-invoices";
 import dynamic from "next/dynamic";
 import { operationViews } from "@/modules/stock/navigation";
 import { toCSV } from "@/modules/stock/csv-export";
+import CashierScanner from "@/components/stock/cashier-scanner";
+import { addCartItem } from "@/modules/stock/cart";
 const OperationsPanel = dynamic(() => import("@/components/stock/operations-panel"), {loading: () => <p role="status">Carregando ferramentas de estoque…</p>});
 import { useRouter } from "next/navigation";
 import {
@@ -768,22 +770,19 @@ export default function StockApp({
       })
       .filter((item): item is { product_id: string; quantity: number; product: Product; total: number } => Boolean(item));
     const cartTotal = cartDetails.reduce((sum, item) => sum + item.total, 0);
+    const cashierProducts = products.filter((product) =>
+      `${product.name} ${product.barcode} ${product.sku || ""}`.toLowerCase().includes(search.toLowerCase()) && qty(product.id) > 0,
+    );
     function addToCart(product: Product) {
-      if (qty(product.id) <= 0) {
-        setError("Este produto está sem estoque.");
-        return;
+      if (busy) return false;
+      try {
+        setCart(addCartItem(cart, product.id, qty(product.id)));
+        setError("");
+        return true;
+      } catch (cartError) {
+        setError(cartError instanceof Error ? cartError.message : "Não foi possível adicionar o produto.");
+        return false;
       }
-      setCart((items) => {
-        const existing = items.find((item) => item.product_id === product.id);
-        if (existing) {
-          return items.map((item) =>
-            item.product_id === product.id
-              ? { ...item, quantity: Math.min(item.quantity + 1, qty(product.id)) }
-              : item,
-          );
-        }
-        return [...items, { product_id: product.id, quantity: 1 }];
-      });
     }
     function confirmSale(externalOrderId?: string) {
       if (!cartDetails.length) {
@@ -1525,16 +1524,16 @@ export default function StockApp({
                     <Search size={18} />
                     <input
                       aria-label="Buscar produto para venda"
-                      placeholder="Buscar produto"
+                      placeholder="Buscar nome, código ou SKU"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />
                   </div>
                 </div>
+                <CashierScanner key={`${tenant}:${location}:${busy}`} products={products} onAdd={addToCart} disabled={busy || !location} />
                 <div className="cashier-product-grid">
-                  {!products.some((product) => product.name.toLowerCase().includes(search.toLowerCase()) && qty(product.id) > 0) && <div className="empty"><Package /><h3>{search ? "Nenhum produto encontrado" : "Nenhum produto disponível para venda"}</h3><p>{search ? "Tente outro nome ou limpe a busca." : "Cadastre um produto e registre uma entrada nesta unidade."}</p><button className="btn" onClick={() => search ? setSearch("") : go("Produtos")}>{search ? "Limpar busca" : "Ver produtos"}</button></div>}
-                  {products
-                    .filter((product) => product.name.toLowerCase().includes(search.toLowerCase()) && qty(product.id) > 0)
+                  {!cashierProducts.length && <div className="empty"><Package /><h3>{search ? "Nenhum produto encontrado" : "Nenhum produto disponível para venda"}</h3><p>{search ? "Tente outro nome, código ou limpe a busca." : "Cadastre um produto e registre uma entrada nesta unidade."}</p><button className="btn" onClick={() => search ? setSearch("") : go("Produtos")}>{search ? "Limpar busca" : "Ver produtos"}</button></div>}
+                  {cashierProducts
                     .map((product) => (
                       <button className="cashier-product" key={product.id} onClick={() => addToCart(product)}>
                         {product.image_url ? <img src={product.image_url} alt="" /> : <Package size={22} />}

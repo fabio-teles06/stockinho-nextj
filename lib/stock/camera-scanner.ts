@@ -1,5 +1,7 @@
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
-import { DecodeHintType } from "@zxing/library";
+import { BarcodeFormat, DecodeHintType } from "@zxing/library";
+
+export type CameraScanMode = "barcode" | "qr";
 
 export function cameraErrorMessage(error: unknown) {
   const name = error && typeof error === "object" && "name" in error
@@ -15,14 +17,22 @@ export function cameraErrorMessage(error: unknown) {
 }
 
 type Callbacks = {
+  mode?: CameraScanMode;
   onResult: (code: string) => void;
   onError: (message: string) => void;
   onReady: () => void;
 };
 
-export function createCameraReader() {
+export function createCameraReader(mode?: CameraScanMode) {
+  const hints = new Map<DecodeHintType, unknown>([[DecodeHintType.TRY_HARDER, true]]);
+  if (mode) hints.set(DecodeHintType.POSSIBLE_FORMATS, mode === "qr"
+    ? [BarcodeFormat.QR_CODE]
+    : [BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E, BarcodeFormat.CODE_128, BarcodeFormat.CODE_39,
+      BarcodeFormat.CODE_93, BarcodeFormat.ITF, BarcodeFormat.CODABAR,
+      BarcodeFormat.RSS_14, BarcodeFormat.RSS_EXPANDED]);
   return new BrowserMultiFormatReader(
-    new Map([[DecodeHintType.TRY_HARDER, true]]),
+    hints,
     { delayBetweenScanAttempts: 150 },
   );
 }
@@ -42,7 +52,7 @@ export function startCameraScanner(
   dependencies = {
     secureContext: globalThis.isSecureContext,
     mediaDevices: navigator.mediaDevices,
-    reader: createCameraReader(),
+    reader: createCameraReader(callbacks.mode),
   },
 ) {
   let canceled = false;
@@ -69,8 +79,9 @@ export function startCameraScanner(
         audio: false,
         video: {
           facingMode: { ideal: "environment" },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: callbacks.mode === "qr" ? 1080 : 1920 },
+          height: { ideal: callbacks.mode === "qr" ? 1440 : 1080 },
+          aspectRatio: { ideal: callbacks.mode === "qr" ? 3 / 4 : 16 / 9 },
         },
       });
       if (canceled) {
