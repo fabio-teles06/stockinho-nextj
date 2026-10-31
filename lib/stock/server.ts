@@ -5,6 +5,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status = 400,
+    public code?: string,
   ) {
     super(message);
   }
@@ -56,7 +57,7 @@ export async function supa(
   
   const text = await r.text();
   const body = text ? JSON.parse(text) : null;
-  if (!r.ok) throw new ApiError(body?.msg || body?.message || body?.error_description || "Não foi possível concluir a solicitação.", r.status);
+  if (!r.ok) throw new ApiError(body?.msg || body?.message || body?.error_description || "Não foi possível concluir a solicitação.", r.status, body?.code);
   return body;
 }
 export async function session() {

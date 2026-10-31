@@ -27,6 +27,14 @@ export function createCameraReader() {
   );
 }
 
+function isRecoverableScanError(error: unknown) {
+  // ZXing's error names come from constructor.name, which changes when minified.
+  // getKind() returns a stable identifier, including across library copies.
+  return !!error && typeof error === "object" && "getKind" in error &&
+    typeof error.getKind === "function" &&
+    ["NotFoundException", "ChecksumException", "FormatException"].includes(error.getKind());
+}
+
 // Own the stream so closing the scanner also cancels a pending camera startup.
 export function startCameraScanner(
   video: HTMLVideoElement,
@@ -74,7 +82,7 @@ export function startCameraScanner(
         if (result) {
           stop();
           callbacks.onResult(result.getText());
-        } else if (error && !["NotFoundException", "ChecksumException", "FormatException"].includes(error.name)) {
+        } else if (error && !isRecoverableScanError(error)) {
           stop();
           callbacks.onError(cameraErrorMessage(error));
         }

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { failure, session, supa } from "@/lib/stock/server";
+import { ApiError, failure, session, supa } from "@/lib/stock/server";
 export async function GET(req: Request) {
   try {
     const { token } = await session(),
@@ -30,6 +30,11 @@ export async function GET(req: Request) {
     });
     return Response.json(data, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
+    if (e instanceof ApiError && e.code === "PGRST202")
+      return failure(new ApiError(
+        "O relatório financeiro está indisponível. A atualização do banco de dados precisa ser concluída pelo administrador.",
+        503,
+      ));
     if (e instanceof z.ZodError)
       return Response.json(
         { error: "Confira o local e as datas." },

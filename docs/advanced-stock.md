@@ -41,6 +41,21 @@ Não há dados de demonstração nos novos fluxos de produção. O arquivo de mo
 - `POST /api/stock/labels`: empresa, produtos, cópias, modelo e papel; retorna PDF.
 - [API de chat](../app/api/chat/route.ts), [uso de planos](../app/api/billing/route.ts) e [movimentação legada](../app/api/stock/route.ts) foram integrados às regras novas.
 
+## Erro de função ausente no financeiro
+
+Se a API retornar `PGRST202` para `public.stockinho_finance(p_from, p_location, p_tenant, p_to)`, confira a instalação do banco no projeto Supabase usado pela aplicação. A ordem dos parâmetros na mensagem é alfabética; a API envia os parâmetros por nome.
+
+No SQL Editor desse projeto, execute o conteúdo completo da [migration de relatórios](../database/migrations/20261031_stock_reports.sql), após a [migration operacional](../database/migrations/20261031_stock_operations.sql). A migration de relatórios cria a função, tabelas, permissões e notifica o PostgREST. Caso o assistente também apresente função ausente, execute depois a [migration de cota/contexto](../database/migrations/20261031_stock_usage.sql).
+
+Confira a instalação com:
+
+```sql
+select to_regprocedure('public.stockinho_finance(uuid,uuid,date,date)');
+select to_regclass('public.sk_valuations'), to_regclass('public.sk_audit_events');
+```
+
+Se a função existir e a API continuar sem encontrá-la, execute `notify pgrst, 'reload schema';` e tente novamente após a atualização do cache. Recarregar o cache não cria uma função ausente. Não reaplique o schema inicial em um banco já instalado.
+
 ## Dados e consistência
 
 O banco continua sendo a autoridade das quantidades. `stockinho_private.move_core` valida empresa, usuário, produto ativo, local, quantidade com duas casas, saldo, lote e plano. O saldo do produto/local, o saldo do lote e a movimentação são gravados na mesma transação. Operações usam um advisory lock transacional por empresa. As funções antigas de movimento continuam disponíveis e delegam ao núcleo; produtos controlados por lote exigem o fluxo que informa o lote.

@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
 import { BinaryBitmap, HybridBinarizer, RGBLuminanceSource, NotFoundException } from "@zxing/library";
 import bwip from "bwip-js";
+import QRCode from "qrcode";
+import { build } from "esbuild";
 import { startCameraScanner, cameraErrorMessage, createCameraReader } from "../lib/stock/camera-scanner.ts";
 
 test("scanner decodes EAN-13 and internal Code 128 labels from generated image pixels", () => {
@@ -24,6 +27,27 @@ test("scanner decodes EAN-13 and internal Code 128 labels from generated image p
 });
 
 const tick = () => new Promise((resolve) => setImmediate(resolve));
+
+test("scanner decodes internal QR labels from generated image pixels", () => {
+  const text = "STK:12345678-abcd-4321-9876-123456789abc";
+  const { modules } = QRCode.create(text);
+  const scale = 4, margin = 4;
+  const size = (modules.size + margin * 2) * scale;
+  const pixels = new Uint8ClampedArray(size * size).fill(255);
+  for (let row = 0; row < modules.size; row++) {
+    for (let column = 0; column < modules.size; column++) {
+      if (!modules.get(row, column)) continue;
+      for (let y = 0; y < scale; y++) {
+        const offset = ((row + margin) * scale + y) * size + (column + margin) * scale;
+        pixels.fill(0, offset, offset + scale);
+      }
+    }
+  }
+  const source = new RGBLuminanceSource(pixels, size, size);
+  const result = createCameraReader().decodeBitmap(new BinaryBitmap(new HybridBinarizer(source)));
+  assert.equal(result.getText(), text);
+});
+
 function setup() {
   const state = { trackStops: 0, readerStops: 0, results: [], errors: [], ready: 0 };
   const stream = { getTracks: () => [{ stop: () => state.trackStops++ }] };
@@ -105,6 +129,32 @@ test("fatal decode failures stop the camera and report an error", async () => {
   await tick();
   state.callback(undefined, new Error("Canvas failed"));
   assert.equal(state.errors.length, 1);
+  assert.equal(state.trackStops, 1);
+  assert.equal(state.readerStops, 1);
+});
+
+test("minified production errors keep scanning until a QR code is found", async () => {
+  const { outputFiles } = await build({
+    stdin: {
+      contents: `import { NotFoundException, ChecksumException, FormatException } from '@zxing/library';
+        export const errors = [new NotFoundException(), new ChecksumException(), new FormatException()];`,
+      resolveDir: fileURLToPath(new URL("..", import.meta.url)),
+    },
+    bundle: true, minify: true, write: false, format: "esm", platform: "browser",
+  });
+  const { errors } = await import(`data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString("base64")}`);
+  const { state, start } = setup();
+  start();
+  await tick();
+  for (const error of errors) {
+    assert.notEqual(error.name, error.getKind());
+    state.callback(undefined, error);
+  }
+  assert.deepEqual(state.errors, []);
+  assert.equal(state.trackStops, 0);
+  assert.equal(state.readerStops, 0);
+  state.callback({ getText: () => "STK:qr-product" });
+  assert.deepEqual(state.results, ["STK:qr-product"]);
   assert.equal(state.trackStops, 1);
   assert.equal(state.readerStops, 1);
 });
