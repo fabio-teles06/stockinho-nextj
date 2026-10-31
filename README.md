@@ -168,7 +168,7 @@ O cadastro é realizado pelo Supabase Auth, que armazena a senha somente como ha
 
 ## Cobrança Asaas
 
-1. No Asaas, crie uma conta Sandbox e copie a API key do ambiente Sandbox para `ASAAS_API_KEY`; use `ASAAS_ENVIRONMENT=sandbox`.
+1. No Asaas, crie uma conta Sandbox e copie a API key do ambiente Sandbox para `ASAAS_API_KEY`; use `ASAAS_ENVIRONMENT=sandbox`. Como a chave pode começar com `$`, envolva o valor em aspas simples no `.env`, por exemplo: `ASAAS_API_KEY='$aact_sandbox_...'`.
 2. Gere um token aleatório próprio para o webhook e configure `ASAAS_WEBHOOK_TOKEN`. Ele é diferente da API key.
 3. Configure `SUPABASE_SERVICE_ROLE_KEY` apenas no ambiente do servidor. Ela é usada para persistir eventos financeiros sem expor privilégios ao navegador.
 4. Registre `https://SEU_DOMINIO/api/webhooks/asaas` no painel do Asaas, enviando os eventos de assinatura e pagamento, incluindo `PAYMENT_CREATED`, `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_OVERDUE`, `PAYMENT_REFUNDED`, `PAYMENT_CHARGEBACK_REQUESTED`, `SUBSCRIPTION_UPDATED`, `SUBSCRIPTION_INACTIVATED` e `SUBSCRIPTION_DELETED`.

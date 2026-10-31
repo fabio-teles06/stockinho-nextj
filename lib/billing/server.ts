@@ -22,20 +22,24 @@ export function billingConfig() {
   const environment = process.env.ASAAS_ENVIRONMENT === "production"
     ? "production"
     : "sandbox";
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!apiKey || !serviceRole) {
-    throw new ApiError(
-      "A cobrança ainda não foi configurada no servidor.",
-      503,
-    );
-  }
+  if (!apiKey) throw new ApiError("A chave do Asaas não foi configurada no servidor.", 503);
   return {
     apiKey,
-    serviceRole,
     baseUrl: environment === "production"
       ? "https://api.asaas.com/v3"
       : "https://sandbox.asaas.com/api/v3",
   };
+}
+
+function supabaseBillingConfig() {
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRole) {
+    throw new ApiError(
+      "A chave de serviço do Supabase não foi configurada no servidor.",
+      503,
+    );
+  }
+  return { serviceRole };
 }
 
 export async function billingSupa(
@@ -45,7 +49,7 @@ export async function billingSupa(
 ): Promise<any> {
   // Supabase REST responses are intentionally decoded at the route boundary.
   const { url } = config();
-  const serviceRole = billingConfig().serviceRole;
+  const { serviceRole } = supabaseBillingConfig();
   const response = await fetch(url + path, {
     ...init,
     headers: {
