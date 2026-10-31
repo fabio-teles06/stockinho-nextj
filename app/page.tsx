@@ -7,6 +7,7 @@ import {
   Boxes,
   Check,
   CircleAlert,
+  LayoutDashboard,
   Leaf,
   Package,
   ScanLine,
@@ -15,7 +16,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const features = [
   { icon: Boxes, title: "Estoque sempre em dia", text: "Acompanhe entradas, saídas e saldos por unidade sem depender de planilhas." },
@@ -41,6 +42,16 @@ function Brand() {
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth")
+      .then(async (response) => {
+        const data = await response.json() as { authenticated?: boolean };
+        setAuthenticated(Boolean(data.authenticated));
+      })
+      .catch(() => setAuthenticated(false));
+  }, []);
 
   return (
 
@@ -67,8 +78,14 @@ export default function Home() {
 
 
         <div className="home-header-actions">
-          <a className="home-login" href="/login">Entrar</a>
-          <a className="home-button small" href="/login?mode=signup">Começar agora <ArrowUpRight size={15} /></a>
+          {authenticated ? (
+            <a className="home-button small" href="/painel">Abrir painel <LayoutDashboard size={15} /></a>
+          ) : (
+            <>
+              <a className="home-login" href="/login">Entrar</a>
+              <a className="home-button small" href="/login?mode=signup">Começar agora <ArrowUpRight size={15} /></a>
+            </>
+          )}
         </div>
         <button
           className="mobile-menu-toggle"
@@ -85,7 +102,7 @@ export default function Home() {
             <a href="#como-funciona" onClick={() => setMobileMenuOpen(false)}>Como funciona</a>
             <a href="#beneficios" onClick={() => setMobileMenuOpen(false)}>Benefícios</a>
             <a href="/precos">Planos</a>
-            <a href="/login">Entrar</a>
+            <a href={authenticated ? "/painel" : "/login"}>{authenticated ? "Abrir painel" : "Entrar"}</a>
           </div>
         )}
       </header>

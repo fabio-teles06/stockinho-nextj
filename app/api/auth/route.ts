@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import {
   config,
   supa,
+  session,
   saveSession,
   failure,
   sameOrigin,
@@ -11,9 +12,18 @@ import { z } from "zod";
 export async function GET() {
   try {
     config();
-    return Response.json({ configured: true });
+    try {
+      const current = await session();
+      return Response.json({
+        configured: true,
+        authenticated: true,
+        user: { id: current.user.id, email: current.user.email },
+      });
+    } catch {
+      return Response.json({ configured: true, authenticated: false });
+    }
   } catch {
-    return Response.json({ configured: false });
+    return Response.json({ configured: false, authenticated: false });
   }
 }
 export async function POST(req: Request) {

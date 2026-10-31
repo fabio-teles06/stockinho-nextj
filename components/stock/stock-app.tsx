@@ -52,6 +52,14 @@ import {
   SlidersHorizontal,
   ShoppingCart,
   CreditCard,
+  ScanBarcode,
+  ClipboardList,
+  FileSpreadsheet,
+  Truck,
+  ClipboardPenLine,
+  Repeat2,
+  Layers3,
+  Tag,
 } from "lucide-react";
 import {
   SidebarProvider,
@@ -121,7 +129,15 @@ const nav = [
   ["Movimentações", ArrowLeftRight],
   ["Categorias", Tags],
   ["Lojas e depósitos", Store],
-  ...operationViews.map((label) => [label, Boxes] as const),
+  ["Escanear código", ScanBarcode],
+  ["Inventários", ClipboardList],
+  ["Importação", FileSpreadsheet],
+  ["Fornecedores", Truck],
+  ["Pedidos de compra", ClipboardPenLine],
+  ["Transferências", Repeat2],
+  ["Lotes e validades", Layers3],
+  ["Etiquetas", Tag],
+  ["Financeiro", Wallet],
   ["Assistente IA", Sparkles],
 ] as const;
 function Pick({
