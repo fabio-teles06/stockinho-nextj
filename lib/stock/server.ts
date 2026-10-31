@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { isAllowedOrigin } from "./origin";
+import { SESSION_MAX_AGE } from "./session-policy";
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -54,7 +55,9 @@ export async function supa(
   }
   
   const text = await r.text();
-  return text ? JSON.parse(text) : null;
+  const body = text ? JSON.parse(text) : null;
+  if (!r.ok) throw new ApiError(body?.msg || body?.message || body?.error_description || "Não foi possível concluir a solicitação.", r.status);
+  return body;
 }
 export async function session() {
   const jar = await cookies();
@@ -76,8 +79,10 @@ export async function session() {
   if (!token) throw new ApiError("Entre na sua conta para continuar.", 401);
   try {
     const user = await supa("/auth/v1/user", token);
+    if (!user?.id) throw new ApiError("Sessão inválida.", 401);
     return { token, user };
   } catch (e) {
+    if (e instanceof ApiError && e.status !== 401 && e.status !== 403) throw e;
     if (!refresh) throw new ApiError("Sessão inválida.", 401);
     try {
       const s = await supa(
@@ -96,6 +101,7 @@ export async function session() {
   }
 }
 export async function saveSession(s: any) {
+  if (!s?.access_token || !s?.refresh_token) throw new ApiError("Não foi possível renovar a sessão. Entre novamente.", 401);
   const jar = await cookies();
   const opts = {
     httpOnly: true,
@@ -109,7 +115,7 @@ export async function saveSession(s: any) {
   });
   jar.set("sk_refresh", s.refresh_token, {
     ...opts,
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: SESSION_MAX_AGE,
   });
 }
 export function sameOrigin(req: Request) {
