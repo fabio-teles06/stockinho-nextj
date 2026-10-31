@@ -68,7 +68,7 @@ export default function Home() {
 
         <div className="home-header-actions">
           <a className="home-login" href="/login">Entrar</a>
-          <a className="home-button small" href="/login">Começar agora <ArrowUpRight size={15} /></a>
+          <a className="home-button small" href="/login?mode=signup">Começar agora <ArrowUpRight size={15} /></a>
         </div>
         <button
           className="mobile-menu-toggle"
@@ -96,7 +96,7 @@ export default function Home() {
           <h1>Seu estoque em ordem.<span>Seu negócio mais leve.</span></h1>
           <p>Controle produtos, movimentações e reposições de um jeito simples, para sobrar mais tempo para cuidar de quem entra pela sua porta.</p>
           <div className="hero-actions">
-            <a className="home-button" href="/login">Organizar meu estoque <ArrowRight size={17} /></a>
+            <a className="home-button" href="/login?mode=signup">Organizar meu estoque <ArrowRight size={17} /></a>
             <a className="home-text-link" href="#como-funciona">Veja como funciona <ArrowUpRight size={15} /></a>
           </div>
           <div className="hero-trust">
@@ -141,7 +141,7 @@ export default function Home() {
         <div className="section-heading"><span>O ESSENCIAL, BEM FEITO</span><h2>Tudo o que você precisa para cuidar do seu estoque.</h2><p>Sem complicação, excesso de telas ou termos difíceis.</p></div>
         <div className="feature-grid">
           {features.map(({ icon: Icon, title, text }) => (
-            <article key={title}><div><Icon size={22} /></div><h3>{title}</h3><p>{text}</p><a href="/login">Conhecer recurso <ArrowRight size={14} /></a></article>
+            <article key={title}><div><Icon size={22} /></div><h3>{title}</h3><p>{text}</p><a href="/login?mode=signup">Conhecer recurso <ArrowRight size={14} /></a></article>
           ))}
         </div>
       </section>
@@ -154,7 +154,7 @@ export default function Home() {
       </section>
 
       <section className="home-benefit" id="beneficios">
-        <div className="benefit-card"><Sparkles size={28} /><span>ASSISTENTE STOCKINHO</span><h2>As respostas do seu estoque, sem perder tempo procurando.</h2><p>Pergunte o que precisa ser reposto, quais produtos mais saíram ou quanto há investido no estoque.</p><a className="home-button light" href="/login">Começar agora <ArrowRight size={17} /></a></div>
+        <div className="benefit-card"><Sparkles size={28} /><span>ASSISTENTE STOCKINHO</span><h2>As respostas do seu estoque, sem perder tempo procurando.</h2><p>Pergunte o que precisa ser reposto, quais produtos mais saíram ou quanto há investido no estoque.</p><a className="home-button light" href="/login?mode=signup">Começar agora <ArrowRight size={17} /></a></div>
         <div className="benefit-chat">
           <div className="chat-question">O que preciso repor esta semana?</div>
           <div className="chat-answer"><Sparkles size={17} /><p>Encontrei <b>8 produtos</b> que precisam de atenção. Café e leite são os mais urgentes.</p></div>
@@ -163,7 +163,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="home-cta"><div><span>PRONTO PARA COMEÇAR?</span><h2>Um estoque organizado muda o dia inteiro.</h2></div><a className="home-button" href="/login">Criar minha conta <ArrowRight size={17} /></a></section>
+      <section className="home-cta"><div><span>PRONTO PARA COMEÇAR?</span><h2>Um estoque organizado muda o dia inteiro.</h2></div><a className="home-button" href="/login?mode=signup">Criar minha conta <ArrowRight size={17} /></a></section>
 
 <footer className="home-footer"><Brand /><p>Controle de estoque simples para negócios que fazem a diferença.</p><div><a href="#recursos">Recursos</a><a href="#como-funciona">Como funciona</a><a href="/login">Entrar</a></div><small>© 2026 Stockinho. Feito com cuidado para pequenos negócios.</small></footer>
     </main>

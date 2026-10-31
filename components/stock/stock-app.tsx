@@ -223,6 +223,8 @@ export default function StockApp({
   const [tenant, setTenant] = useState(initialData.companies[0]?.id || "");
   const [location, setLocation] = useState(initialData.locations[0]?.id || "");
   const [search, setSearch] = useState("");
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [proIntent, setProIntent] = useState(false);
   const [filter, setFilter] = useState("all");
   const [period, setPeriod] = useState("7");
   const [modal, setModal] = useState(
@@ -246,6 +248,20 @@ export default function StockApp({
   const [installments, setInstallments] = useState(1);
   const [tapPendingOrder, setTapPendingOrder] = useState("");
   const [user] = useState(initialEmail?.split("@")[0] || "Olá");
+  const initials = user.split(/[._\s-]+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+  useEffect(() => {
+    const restoreView = () => {
+      const requested = new URLSearchParams(window.location.search).get("view");
+      if (requested && Object.hasOwn(titles, requested)) setView(requested);
+      else setView(initialData.companies.length ? "Visão geral" : "Configurações");
+      setSearch("");
+      setFilter("all");
+    };
+    restoreView();
+    setProIntent(new URLSearchParams(window.location.search).get("intent") === "pro" || sessionStorage.getItem("stockinho-plan") === "pro");
+    window.addEventListener("popstate", restoreView);
+    return () => window.removeEventListener("popstate", restoreView);
+  }, [initialData.companies.length]);
   useEffect(() => {
     if (notice) {
       toast.success(notice);
@@ -262,15 +278,19 @@ export default function StockApp({
     const orderId = params.get("order_id");
     if (params.get("tap_result") === "1" && orderId) {
       setTapPendingOrder(orderId);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("tap_result");
+      url.searchParams.delete("order_id");
+      url.searchParams.set("view", "Caixa");
+      window.history.replaceState({}, "", url);
       setView("Caixa");
-      window.history.replaceState({}, "", "/painel");
     }
   }, []);
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setView("Produtos");
+        go("Produtos");
         requestAnimationFrame(() =>
           (
             document.querySelector(
@@ -350,6 +370,17 @@ export default function StockApp({
     )
       ?.role || "operator";
   const canManage = role === "admin";
+  const setupSteps = [
+    { label: "Empresa", done: Boolean(tenant), action: "company" },
+    { label: "Unidade", done: locations.length > 0, action: "location" },
+    { label: "Categoria", done: categories.length > 0, action: "category" },
+    { label: "Produto", done: products.length > 0, action: "product" },
+    {
+      label: "Entrada inicial",
+      done: data.movements.some((movement) => movement.tenant_id === tenant && movement.type === "entrada"),
+      action: "movement",
+    },
+  ];
   const qty = (id: string) =>
     data.balances
       .filter(
@@ -403,6 +434,9 @@ export default function StockApp({
     [data, tenant, location, period],
   );
   function go(v: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("view", v);
+    if (url.href !== window.location.href) window.history.pushState({}, "", url);
     setView(v);
     setSearch("");
     setFilter("all");
@@ -889,12 +923,14 @@ export default function StockApp({
         {!rows.length && (
           <div className="empty">
             <Package />
-            <h3>{compact ? "Estoque em dia!" : "Nenhum produto encontrado"}</h3>
+            <h3>{compact ? (products.length ? "Estoque em dia!" : "Seu estoque começa aqui") : products.length ? "Nenhum produto encontrado" : "Cadastre seu primeiro produto"}</h3>
             <p>
               {compact
-                ? "Nenhum produto precisa de reposição."
-                : "Cadastre um produto ou altere os filtros."}
+                ? (products.length ? "Nenhum produto precisa de reposição." : "Adicione produtos e registre uma entrada para acompanhar os saldos.")
+                : products.length ? "Tente outro nome, código de barras ou remova os filtros." : "Comece pelo nome, categoria e preço do produto."}
             </p>
+            {!compact && products.length > 0 && <button className="btn" onClick={() => { setSearch(""); setFilter("all"); }}>Limpar busca e filtros</button>}
+            {!products.length && canManage && <button className="btn primary" onClick={() => open(categories.length ? "product" : "category")}>{categories.length ? "Cadastrar produto" : "Criar primeira categoria"}</button>}
           </div>
         )}
       </div>
@@ -989,9 +1025,9 @@ export default function StockApp({
             </div>
           )}
           <button className="profile" onClick={() => go("Configurações")}>
-            <span className="avatar">{user.slice(0, 1).toUpperCase()}T</span>
+            <span className="avatar">{initials}</span>
             <span>
-              <strong>{user === "Fabio" ? "Fabio Teles" : user}</strong>
+              <strong>{user}</strong>
               <small>{role === "admin" ? "Administrador" : "Operador"}</small>
             </span>
             <Settings size={17} />
@@ -1008,19 +1044,16 @@ export default function StockApp({
             <b>{view}</b>
           </div>
           <div className="top-actions">
-            <div className="top-search">
+            <form className="top-search" role="search" onSubmit={(event) => { event.preventDefault(); go("Produtos"); setSearch(globalSearch); }}>
               <Search size={17} />
               <input
                 aria-label="Buscar produtos"
-                placeholder="Buscar no Stockinho..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setView("Produtos");
-                }}
+                placeholder="Buscar produtos…"
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
               />
-              <kbd>⌘ K</kbd>
-            </div>
+              <button type="submit" className="search-submit" aria-label="Pesquisar produtos"><ChevronRight size={18} /></button>
+            </form>
             <button
               className="notification"
               aria-label="Ver alertas de estoque"
@@ -1032,10 +1065,48 @@ export default function StockApp({
               <Bell size={20} />
               {low.length > 0 && <i />}
             </button>
-            <span className="top-avatar">FT</span>
+            <span className="top-avatar" title={initialEmail}>{initials}</span>
           </div>
         </header>
         <main className="workspace">
+          {proIntent && (
+            <aside className="onboarding-panel" aria-label="Contratação do Pro">
+              <div>
+                <strong>Continue com o plano Pro</strong>
+                <p>{tenant ? "Revise os dados e a cobrança antes de contratar." : "Cadastre sua empresa para continuar a contratação."}</p>
+              </div>
+              {tenant && <Link className="btn primary" href={`/configuracoes/assinatura?tenant_id=${tenant}`}>Revisar plano Pro</Link>}
+              <button className="btn" onClick={() => {
+                setProIntent(false);
+                sessionStorage.removeItem("stockinho-plan");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("intent");
+                window.history.replaceState({}, "", url);
+              }}>Agora não</button>
+            </aside>
+          )}
+          {(canManage || !tenant) && setupSteps.some((step) => !step.done) && (
+            <section className="onboarding-panel" aria-label="Primeiros passos">
+              <div>
+                <strong>Prepare seu estoque</strong>
+                <p>Complete os passos para começar a acompanhar seu negócio.</p>
+                <ol className="onboarding-steps">
+                  {setupSteps.map((step, index) => (
+                    <li key={step.action}>
+                      <button
+                        className="btn"
+                        disabled={step.done || setupSteps.slice(0, index).some((previous) => !previous.done)}
+                        onClick={() => open(step.action, step.action === "movement" ? { type: "entrada" } : null)}
+                      >
+                        {step.done && <Check size={15} />} {index + 1}. {step.label}{step.done ? " — concluído" : ""}
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </section>
+          )}
+          {error && !modal && !deleting && !accountingOpen && <p className="form-error" role="alert">{error}</p>}
           <div className="page-heading">
             <div>
               <div className="eyebrow">
@@ -1431,6 +1502,7 @@ export default function StockApp({
                   </div>
                 </div>
                 <div className="cashier-product-grid">
+                  {!products.some((product) => product.name.toLowerCase().includes(search.toLowerCase()) && qty(product.id) > 0) && <div className="empty"><Package /><h3>{search ? "Nenhum produto encontrado" : "Nenhum produto disponível para venda"}</h3><p>{search ? "Tente outro nome ou limpe a busca." : "Cadastre um produto e registre uma entrada nesta unidade."}</p><button className="btn" onClick={() => search ? setSearch("") : go("Produtos")}>{search ? "Limpar busca" : "Ver produtos"}</button></div>}
                   {products
                     .filter((product) => product.name.toLowerCase().includes(search.toLowerCase()) && qty(product.id) > 0)
                     .map((product) => (
@@ -1505,6 +1577,7 @@ export default function StockApp({
                 <div className="input-search">
                   <Search size={18} />
                   <input
+                    aria-label="Buscar por nome ou código de barras"
                     placeholder="Buscar por nome ou código de barras"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}

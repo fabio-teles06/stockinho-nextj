@@ -40,7 +40,7 @@ export default function PricingPage() {
             <p>{plan.description}</p>
             <div className="pricing-price">{plan.price}<small>/mês</small></div>
             <ul>{plan.features.map((feature) => <li key={feature}><Check size={16} />{feature}</li>)}</ul>
-            <Link className={"billing-action " + (plan.code === "pro" ? "primary" : "")} href={plan.code === "pro" ? "/login?intent=pro" : "/login"}>
+            <Link className={"billing-action " + (plan.code === "pro" ? "primary" : "")} href={plan.code === "pro" ? "/login?mode=signup&intent=pro" : "/login?mode=signup"}>
               {plan.code === "pro" ? "Começar com Pro" : "Começar grátis"} <ArrowRight size={16} />
             </Link>
           </article>

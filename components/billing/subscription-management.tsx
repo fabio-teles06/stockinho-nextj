@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, Check, CreditCard, LoaderCircle, X } from "lucide-react";
 import { PendingInvoices, type PendingPayment } from "./pending-invoices";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 
 type BillingPlan = { code: string; name: string; price: number };
 type BillingData = {
@@ -21,6 +22,8 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
   const [data, setData] = useState<BillingData | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [notice, setNotice] = useState("");
   const load = useCallback(() => fetch(`/api/billing?tenant_id=${tenantId}`).then(async (response) => {
     const body: unknown = await response.json();
     const result = body as BillingData & { error?: string };
@@ -32,6 +35,7 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
   async function checkout() {
     setBusy(true);
     setError("");
+    setNotice("");
     try {
       const response = await fetch("/api/billing", {
         method: "POST",
@@ -44,8 +48,9 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
       });
       const body: { error?: string; paymentUrl?: string } = await response.json();
       if (!response.ok) throw new Error(body.error);
+      sessionStorage.removeItem("stockinho-plan");
       if (body.paymentUrl) window.location.assign(body.paymentUrl);
-      else setError("Contratação criada. Aguardando a primeira cobrança do Asaas.");
+      else setNotice("Contratação criada. Aguardando a primeira cobrança. Confira suas cobranças abaixo.");
       await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Não foi possível iniciar a contratação.");
@@ -55,8 +60,9 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
   }
 
   async function cancel() {
-    if (!window.confirm("Deseja cancelar a assinatura Pro?")) return;
     setBusy(true);
+    setError("");
+    setNotice("");
     try {
       const response = await fetch("/api/billing", {
         method: "POST",
@@ -66,6 +72,8 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
       const body: { error?: string } = await response.json();
       if (!response.ok) throw new Error(body.error);
       await load();
+      setCancelOpen(false);
+      setNotice("Assinatura cancelada. A cobrança recorrente foi encerrada.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Não foi possível cancelar a assinatura.");
     } finally {
@@ -97,6 +105,7 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
         <span className={"billing-status " + (status === "active" ? "active" : "")}>{statusLabel[status] ?? "Em processamento"}</span>
       </section>
       {error && <p role="alert" className="billing-error">{error}</p>}
+      {notice && <p role="status" className="form-success">{notice}</p>}
       <section className="billing-usage-grid">
         {[
           ["Produtos ativos", data.usage.products.used, data.usage.products.limit],
@@ -120,10 +129,23 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
               </button>
             </div>
           )}
-          {active && <button className="billing-action danger" disabled={busy} onClick={cancel}>{busy ? <LoaderCircle className="spin" /> : <X size={16} />} Cancelar assinatura</button>}
+          {active && <button className="billing-action danger" disabled={busy} onClick={() => setCancelOpen(true)}><X size={16} /> Cancelar assinatura</button>}
           <p><Check size={15} /> O Pro só libera recursos depois da confirmação financeira do Asaas.</p>
         </section>
       )}
+      <AlertDialog open={cancelOpen} onOpenChange={(open) => { if (!busy) setCancelOpen(open); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar assinatura Pro?</AlertDialogTitle>
+            <AlertDialogDescription>A cobrança recorrente será encerrada e a assinatura será cancelada imediatamente. Os recursos do Pro deixarão de estar disponíveis. Seus dados e o histórico de estoque serão mantidos. Cobranças já emitidas podem continuar pendentes.</AlertDialogDescription>
+          </AlertDialogHeader>
+          {error && <p className="billing-error" role="alert">{error}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Manter assinatura</AlertDialogCancel>
+            <button className="billing-action danger" disabled={busy} onClick={cancel}>{busy ? "Cancelando…" : "Confirmar cancelamento"}</button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, FormEvent } from "react";
+import { startTransition, useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Package, Leaf, ArrowRight } from "lucide-react";
@@ -21,6 +21,8 @@ type AuthResponse = {
 export default function Login() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [proIntent, setProIntent] = useState(false);
+  const [confirmation, setConfirmation] = useState(false);
   const [signup, setSignup] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
@@ -30,6 +32,13 @@ export default function Login() {
     [resetSuccess, setResetSuccess] = useState(false),
     [configured, setConfigured] = useState<boolean | null>(null);
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pro = params.get("intent") === "pro" || sessionStorage.getItem("stockinho-plan") === "pro";
+    startTransition(() => {
+      setProIntent(pro);
+      setSignup(params.get("mode") === "signup");
+    });
+    if (pro) sessionStorage.setItem("stockinho-plan", "pro");
     fetch("/api/auth")
       .then(async (r) => (await r.json()) as AuthResponse)
       .then((d) => setConfigured(Boolean(d.configured)))
@@ -39,6 +48,7 @@ export default function Login() {
     e.preventDefault();
     setBusy(true);
     setMessage("");
+    setConfirmation(false);
     try {
       const f = Object.fromEntries(new FormData(e.currentTarget));
       const r = await fetch("/api/auth", {
@@ -48,8 +58,10 @@ export default function Login() {
       });
       const d = (await r.json()) as AuthResponse;
       if (!r.ok) throw Error(d.error || "Não foi possível entrar.");
-      if (d.confirmation) setMessage(d.message || "Confira seu e-mail.");
-      else router.push("/painel");
+      if (d.confirmation) {
+        setConfirmation(true);
+        setMessage(d.message || "Confira seu e-mail para confirmar o cadastro. Depois, entre na sua conta.");
+      } else router.push(proIntent ? "/painel?intent=pro" : "/painel");
     } catch (error: unknown) {
       setMessage(error instanceof Error ? error.message : "Erro inesperado.");
     } finally {
@@ -112,10 +124,10 @@ export default function Login() {
               ? "Crie sua conta e organize sua primeira empresa."
               : "Entre para acompanhar o seu negócio."}
           </p>
+          {proIntent && <p className="auth-intent">Plano Pro selecionado. Após entrar, você poderá revisar a contratação antes de pagar.</p>}
           {configured === false && (
             <p className="form-error">
-              A conexão com o Supabase ainda precisa ser configurada. Fale com
-              o responsável pela instalação para liberar o acesso.
+              Não foi possível conectar ao serviço de acesso. Tente recarregar a página ou fale com o suporte.
             </p>
           )}
           <form className="stock-form" onSubmit={submit} aria-busy={busy}>
@@ -125,6 +137,7 @@ export default function Login() {
                 name="email"
                 type="email"
                 autoComplete="email"
+                disabled={busy}
                 required
                 placeholder="voce@seumercado.com.br"
               />
@@ -159,7 +172,7 @@ export default function Login() {
               </button>
             )}
             {message && (
-              <p className="form-error" role="status">
+              <p className={confirmation ? "form-success" : "form-error"} role={confirmation ? "status" : "alert"}>
                 {message}
               </p>
             )}
@@ -167,7 +180,7 @@ export default function Login() {
               className="btn primary"
               disabled={busy || configured !== true}
             >
-              {busy
+              {configured === null ? "Conectando…" : busy
                 ? "Aguarde…"
                 : signup
                   ? "Criar minha conta"

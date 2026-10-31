@@ -2351,29 +2351,6 @@ td small {
 
 
 
-.container-fluid{
-  display: none !important;
-}
-
-.bg-body-tertiary{
-  background-color: transparent !important;
-}
-
-.fixed-top{
-  position: static !important;
-}
-
-.navbar-toggler{
-  border: none !important;
-  z-index: 99999 !important;
-}
-
-.navbar-toggler:focus{
-  box-shadow: none !important;
-}
-
-
-
 .home-brand {
   display: inline-flex;
   align-items: center;
@@ -2407,7 +2384,7 @@ td small {
 }
 .home-header nav { gap: 34px; margin-left: auto; }
 .home-header nav a,
-.home-login { font-size: 13px; color: #61766a; z-index: 9999; }
+.home-login { font-size: 13px; color: #61766a; z-index: 1; }
 .home-header nav a:hover,
 .home-login:hover { color: var(--home-green); }
 .home-header-actions { gap: 22px; }
@@ -2427,7 +2404,7 @@ td small {
   font-weight: 650;
 }
 .home-button:hover { background: #126c47; transform: translateY(-1px); }
-.home-button.small { min-height: 38px; padding: 0 16px; font-size: 12px; z-index: 9999; }
+.home-button.small { min-height: 38px; padding: 0 16px; font-size: 12px; z-index: 1; }
 .home-hero {
   min-height: 650px;
   display: grid;
@@ -2463,11 +2440,11 @@ td small {
   line-height: 1.04;
   letter-spacing: -3.2px;
 }
-.hero-copy h1 span { display: block; color: #72a367; }
+.hero-copy h1 span { display: block; color: #55804c; }
 .hero-copy > p {
   max-width: 520px;
   margin-top: 26px;
-  color: #71847a;
+  color: #53675d;
   font-size: 16px;
   line-height: 1.75;
 }
@@ -2481,7 +2458,7 @@ td small {
   font-weight: 600;
 }
 .hero-trust { gap: 21px; margin-top: 30px; flex-wrap: wrap; }
-.hero-trust span { display: flex; align-items: center; gap: 5px; color: #809087; font-size: 11px; }
+.hero-trust span { display: flex; align-items: center; gap: 5px; color: #53675d; font-size: 11px; }
 .hero-trust svg { color: #66a56e; }
 .hero-visual {
   position: relative;
@@ -2603,785 +2580,7 @@ td small {
 .home-footer { padding: 55px max(24px, calc((100% - 1060px) / 2)) 30px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 40px; border-top: 1px solid #e3eae3; background: #f5f8f3; }
 .home-footer p { color: #829087; font-size: 12px; }
 .home-footer > div { display: flex; gap: 25px; color: #677a6e; font-size: 12px; }
-.home-footer small { grid-column: 1 / -1; padding-top: 25px; border-top: 1px solid #e3e9e2; color: #96a199; font-size: 10px; }
-
-@media (max-width: 980px) {
-  .home-header nav { display: none; }
-  .home-hero { grid-template-columns: 1fr; padding-top: 55px; text-align: center; }
-  .hero-copy h1, .hero-copy > p { margin-left: auto; margin-right: auto; }
-  .home-kicker, .hero-actions, .hero-trust { margin-left: auto; margin-right: auto; justify-content: center; }
-  .hero-visual { width: min(660px, 100%); margin: 0 auto; }
-  .home-steps { gap: 65px; }
-  .home-benefit { grid-template-columns: 1fr; }
-  .benefit-card { padding-left: max(48px, calc((100vw - 700px) / 2)); padding-right: max(48px, calc((100vw - 700px) / 2)); }
-
-
-
-
-nav#menu{
-  background-color: transparent !important;
-  display: flex !important;
-}
-
-nav#menu>#container-fluid{
-  display: flex !important;
-  margin-top: -170px;  
-}
-
-.offcanvas{
- z-index: 999999 !important;
-}
-}
-
-
-
-@media (max-width: 700px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy h1 { font-size: 43px; letter-spacing: -2.2px; }
-  .hero-copy > p { font-size: 15px; }
-  .hero-actions { flex-direction: column; gap: 18px; }
-  .hero-trust { gap: 12px; }
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; }
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: -8px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-
-
-
-  @media (max-width: 634px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy h1 { font-size: 43px; letter-spacing: -2.2px; }
-  .hero-copy > p { font-size: 15px; }
-  .hero-actions { flex-direction: column; gap: 18px; }
-  .hero-trust { gap: 12px; }
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px;width: 500px; }
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: -8px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-}
-
-  @media (max-width: 574px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy{margin-left: 3px;}
-  .hero-copy h1 { font-size: 43px; letter-spacing: -2.2px; }
-  .hero-copy > p { font-size: 15px; padding: 9px; }
-  .hero-actions { flex-direction: column; gap: 18px; }
-  .hero-trust { gap: 12px; }
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; }
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: -8px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  }
-
-
-   @media (max-width: 556px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy h1 { font-size: 43px; letter-spacing: -2.2px; }
-  .hero-copy > p { font-size: 15px; padding: 45px; margin-top: -10px; }
-  .hero-actions { flex-direction: column; gap: 18px; margin-top: -px; }
-  .hero-trust { gap: 12px; }
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; }
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: -8px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  }
-
-
-   @media (max-width: 538px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-copy{margin: auto;}
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  ;.hero-copy{margin-left: -23px;}
-  .hero-copy h1 { font-size: 35px; letter-spacing: -2.2px; padding: 90px; margin-top: -90px;  margin-right: -15px ;  margin-left: -15px; text-align: center;}
-  .hero-copy > p { font-size: 12px; padding: 95px; margin-top:  -160px;  margin-right: 20px ;  margin-left: 20px; text-align: center; }
-  .hero-actions { flex-direction: column; gap: 18px; margin-top: -3px;  margin-right: 3px ;  margin-left: 5px; }
-  .home-kicker{margin-left: 163px ; margin-right: 170px ; padding: 3px 0px;}
-  .hero-trust { gap: 12px; flex-direction: column; margin-right: -15px ;  margin-left: -27px; text-align: center;}
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; }
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: -8px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  }
-
-
-
-   @media (max-width: 524px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-copy{margin: auto;}
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  ;.hero-copy{margin-left: -23px;}
-  .hero-copy h1 { font-size: 35px; letter-spacing: -2.2px; padding: 90px; margin-top: -90px;  margin-right: -15px ;  margin-left: -15px; text-align: center;}
-  .hero-copy > p { font-size: 12px; padding: 95px; margin-top:  -160px;  margin-right: 20px ;  margin-left: 20px; text-align: center; }
-  .hero-actions { flex-direction: column; gap: 18px; margin-top: -3px;  margin-right: 3px ;  margin-left: 5px; }
-  .home-kicker{margin-left: 163px ; margin-right: 170px ; }
-  .hero-trust { gap: 12px; flex-direction: column; margin-right: -15px ;  margin-left: -27px; text-align: center;}
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; width:465px;}
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: -8px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  }
-
-
-
-
-
-
- @media (max-width: 500px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy{margin-left: -36px;}
-  .hero-copy h1 { font-size: 30px; letter-spacing: -2.2px; padding: 155px; margin-top: -153px; }
-  .hero-copy > p { font-size: 12px; padding: 130px; margin-top:  -250px;}
-  .hero-actions { flex-direction: column; gap: 18px; margin-top: -53px; margin-left: 15px;}
-  .home-kicker{padding: 3px 0px; width: 190px;}
-  .hero-trust { gap: 12px; margin-left: 30px; margin-left: -17px;}
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; width: 410px;}
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: 6px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  }
-
-  /* Responsive layout guardrails */
-  html,
-  body {
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
-  .home-page {
-    overflow: clip;
-  }
-
-  .home-header {
-    width: min(1180px, calc(100% - 48px));
-    height: auto;
-    min-height: 84px;
-    padding: 22px 0;
-  }
-
-  .home-hero {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  }
-
-  .dashboard-preview {
-    width: min(610px, 100%);
-  }
-
-  .home-features,
-  .home-steps,
-  .home-cta {
-    padding-left: max(20px, 5vw);
-    padding-right: max(20px, 5vw);
-  }
-
-  .home-footer {
-    padding-left: max(20px, 5vw);
-    padding-right: max(20px, 5vw);
-  }
-
-  .list-toolbar,
-  .page-heading,
-  .dashboard-toolbar {
-    min-width: 0;
-  }
-
-  .list-toolbar > *,
-  .page-heading > *,
-  .dashboard-toolbar > * {
-    min-width: 0;
-  }
-
-  .input-search {
-    flex: 1 1 220px;
-    min-width: min(100%, 220px);
-  }
-
-  .input-search input {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .table-scroll {
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .table-scroll table {
-    width: 100%;
-  }
-
-  .stock-dialog {
-    width: min(640px, calc(100vw - 32px));
-    max-height: calc(100dvh - 32px);
-    overflow-y: auto;
-  }
-
-  @media (max-width: 1100px) {
-    .home-hero {
-      gap: 24px;
-    }
-
-    .hero-copy h1 {
-      font-size: clamp(40px, 5vw, 58px);
-    }
-
-    .home-header nav {
-      gap: 18px;
-    }
-  }
-
-  @media (max-width: 900px) {
-    .home-header {
-      width: calc(100% - 40px);
-    }
-
-    .home-hero {
-      grid-template-columns: 1fr;
-      width: min(680px, calc(100% - 40px));
-      padding-top: 45px;
-    }
-
-    .hero-copy {
-      text-align: center;
-    }
-
-    .hero-copy h1,
-    .hero-copy > p {
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .home-kicker,
-    .hero-actions,
-    .hero-trust {
-      margin-left: auto;
-      margin-right: auto;
-      justify-content: center;
-    }
-
-    .hero-visual {
-      min-height: 420px;
-      width: 100%;
-    }
-
-    .dashboard-toolbar {
-      align-items: flex-start;
-      flex-wrap: wrap;
-    }
-
-    .toolbar-actions {
-      margin-left: auto;
-    }
-
-    .page-heading {
-      align-items: flex-start;
-      flex-wrap: wrap;
-    }
-
-    .location-picker {
-      margin-left: auto;
-    }
-
-    .list-toolbar {
-      align-items: stretch;
-    }
-  }
-
-  @media (max-width: 767px) {
-    .home-header {
-      width: calc(100% - 32px);
-      min-height: 68px;
-      padding: 16px 0;
-      gap: 12px;
-    }
-
-    .home-header nav {
-      order: 3;
-      width: 100%;
-      justify-content: space-between;
-      gap: 8px;
-      padding-top: 10px;
-      border-top: 1px solid #e8eee8;
-    }
-
-    .home-header nav a,
-    .home-login {
-      font-size: 12px;
-    }
-
-    .home-header-actions {
-      margin-left: auto;
-    }
-
-    .home-hero {
-      width: calc(100% - 32px);
-      padding: 42px 0 64px;
-    }
-
-    .hero-copy h1 {
-      max-width: 100%;
-      font-size: clamp(34px, 10vw, 46px);
-      letter-spacing: -2px;
-    }
-
-    .hero-copy > p {
-      font-size: 14px;
-    }
-
-    .hero-actions {
-      width: 100%;
-      gap: 14px;
-    }
-
-    .hero-actions .home-button {
-      width: 100%;
-    }
-
-    .hero-visual {
-      min-height: 300px;
-    }
-
-    .dashboard-preview {
-      height: 245px;
-      grid-template-columns: 42px minmax(0, 1fr);
-    }
-
-    .preview-sidebar {
-      padding: 13px 8px;
-    }
-
-    .preview-sidebar i {
-      margin: 14px 0;
-    }
-
-    .preview-welcome {
-      padding: 14px;
-    }
-
-    .preview-welcome strong {
-      font-size: 15px;
-    }
-
-    .preview-stats {
-      padding: 0 14px;
-      gap: 5px;
-    }
-
-    .preview-stats > div {
-      padding: 7px;
-    }
-
-    .preview-stats b {
-      font-size: 9px;
-    }
-
-    .preview-chart {
-      height: 90px;
-      margin: 8px 14px;
-      padding: 10px;
-    }
-
-    .preview-chart svg {
-      height: 65px;
-    }
-
-    .preview-alert,
-    .preview-scan {
-      min-width: 0;
-      max-width: 155px;
-      padding: 8px;
-    }
-
-    .preview-alert {
-      right: -4px;
-      top: 12px;
-    }
-
-    .preview-scan {
-      left: -4px;
-      bottom: 8px;
-    }
-
-    .workspace {
-      padding: 22px 14px 16px;
-    }
-
-    .topbar {
-      padding: 0 14px;
-      gap: 10px;
-    }
-
-    .top-actions {
-      gap: 12px;
-    }
-
-    .top-avatar {
-      display: none;
-    }
-
-    .breadcrumb {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .page-heading h1 {
-      font-size: clamp(24px, 8vw, 30px);
-    }
-
-    .location-picker {
-      width: 100%;
-      margin-left: 0;
-    }
-
-    .location-picker .pick {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .dashboard-toolbar {
-      gap: 8px;
-      margin-bottom: 18px;
-    }
-
-    .section-tabs {
-      width: 100%;
-      gap: 18px;
-      overflow-x: auto;
-    }
-
-    .section-tabs button {
-      white-space: nowrap;
-    }
-
-    .toolbar-actions {
-      width: 100%;
-      margin-left: 0;
-      justify-content: space-between;
-    }
-
-    .toolbar-actions .btn {
-      flex: 1;
-    }
-
-    .stats-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .stat-card {
-      padding: 14px 12px 0;
-    }
-
-    .stat-top {
-      gap: 6px;
-    }
-
-    .stat-top span {
-      min-width: 0;
-    }
-
-    .stat-value {
-      font-size: clamp(21px, 7vw, 27px);
-    }
-
-    .chart-grid,
-    .bottom-grid,
-    .settings-grid {
-      gap: 14px;
-    }
-
-    .panel-heading {
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .panel-heading > .text-button {
-      margin-left: auto;
-    }
-
-    .list-toolbar {
-      gap: 10px;
-    }
-
-    .list-toolbar > .btn,
-    .list-toolbar > .pick {
-      flex: 1 1 150px;
-    }
-
-    .input-search {
-      flex-basis: 100%;
-    }
-
-    .form-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .form-actions {
-      flex-wrap: wrap;
-    }
-
-    .form-actions .btn {
-      flex: 1 1 140px;
-    }
-
-    .auth-page {
-      min-height: 100dvh;
-    }
-
-    .auth-story {
-      padding: 28px 22px;
-    }
-
-    .auth-box {
-      padding: 28px 20px 40px;
-    }
-
-    .auth-form h2 {
-      font-size: 24px;
-    }
-
-    .home-features,
-    .home-steps,
-    .home-cta {
-      width: 100%;
-      padding-top: 64px;
-      padding-bottom: 64px;
-    }
-
-    .section-heading h2,
-    .steps-intro h2,
-    .benefit-card h2,
-    .home-cta h2 {
-      font-size: clamp(25px, 7vw, 32px);
-    }
-
-    .benefit-card {
-      padding: 60px 22px;
-    }
-
-    .benefit-chat {
-      width: calc(100% - 32px);
-      padding: 18px;
-    }
-
-    .home-cta .home-button {
-      width: 100%;
-    }
-
-    .abc-grid {
-      grid-template-columns: 1fr;
-      padding: 0 14px 14px;
-    }
-  }
-
-  @media (max-width: 420px) {
-    .home-header-actions .home-login {
-      display: none;
-    }
-
-    .home-button.small {
-      padding: 0 10px;
-      font-size: 11px;
-    }
-
-    .hero-trust {
-      align-items: flex-start;
-    }
-
-    .stats-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .stat-card {
-      min-height: 132px;
-    }
-
-    .attention-banner {
-      gap: 10px;
-      padding: 14px;
-    }
-
-    .attention-banner button {
-      margin-left: auto;
-    }
-
-    .chat-heading > button {
-      margin-left: 0;
-    }
-  }
+.home-footer small { grid-column: 1 / -1; padding-top: 25px; border-top: 1px solid #e3e9e2; color: #607367; font-size: 10px; }
 
   .mobile-menu-toggle,
   .mobile-menu {
@@ -3439,252 +2638,6 @@ nav#menu>#container-fluid{
     }
   }
 
-  @media (max-width: 480px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy{margin-left: -36px;}
-  .hero-copy h1 { font-size: 30px; letter-spacing: -2.2px; padding: 155px; margin-top: -153px; }
-  .hero-copy > p { font-size: 12px; padding: 130px; margin-top:  -250px;}
-  .hero-actions { flex-direction: column; gap: 18px; margin-top: -53px; margin-left: 11px;}
-  .hero-trust { gap: 12px; margin-left: -17px; }
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; margin-right: 50px; }
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: 42px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  #offcanvasNavbar{
-    width: 233px !important;
-  }
-
-  }
-
-
-
-
-
-
-   @media (max-width: 450px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy{margin-left: -53px;}
-  .hero-copy h1 { font-size: 30px; letter-spacing: -2.2px; padding: 155px; margin-top: -153px; }
-  .hero-copy > p { font-size: 12px; padding: 130px; margin-top:  -250px;}
-  .hero-actions { flex-direction: column; gap: 18px; margin-top: -53px; margin-left: 11px;}
-  .hero-trust { gap: 12px; margin-left: -17px; }
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; width: 369px; margin-right: 50px;}
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: 57px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  }
-
-
-
-@media (max-width: 428px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy{margin-left: -53px;}
-  .hero-copy h1 { font-size: 30px; letter-spacing: -2.2px; padding: 155px; margin-top: -153px; }
-  .hero-copy > p { font-size: 12px; padding: 130px; margin-top:  -250px;}
-  .hero-actions { flex-direction: column; gap: 18px; margin-top: -53px; margin-left: 11px;}
-  .hero-trust { gap: 12px; margin-left: -17px; }
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; width: 369px; margin-right: 75px;}
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: 72px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  }
-
-
-
-
-
- @media (max-width: 420px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy{margin-left: -66px;}
-  .hero-copy h1 { font-size: 30px; letter-spacing: -2.2px; padding: 155px; margin-top: -153px; }
-  .hero-copy > p { font-size: 12px; padding: 130px; margin-top:  -250px;}
-  .hero-actions { flex-direction: column; gap: 18px; margin-top: -53px; margin-left: 11px;}
-  .hero-trust { gap: 12px; margin-left: -22px; }
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; }
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: 65px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 15px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  }
-
-
-
-   @media (max-width: 400px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy{margin-left: -81px;}
-  .hero-copy h1 { font-size: 30px; letter-spacing: -2.2px; padding: 155px; margin-top: -153px; }
-  .hero-copy > p { font-size: 12px; padding: 130px; margin-top:  -250px;}
-  .hero-actions { flex-direction: column; gap: 18px; margin-top: -53px; margin-left: 14px;}
-  .hero-trust { gap: 12px; margin-left: -10px; }
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; width: 324px; }
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: 82px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 4px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  }
-
-
-
-   @media (max-width: 368px) {
-  .home-header { width: calc(100% - 32px); height: 72px; }
-  .home-header-actions .home-login { display: none; }
-  .home-brand { font-size: 21px; }
-  .home-brand > span { width: 33px; height: 33px; }
-  .home-button.small { min-height: 36px; padding: 0 12px; }
-  .home-hero { width: calc(100% - 32px); min-height: auto; padding: 45px 0 70px; }
-  .hero-copy{margin-left: -103px;}
-  .hero-copy h1 { font-size: 30px; letter-spacing: -2.2px; padding: 155px; margin-top: -153px; }
-  .hero-copy > p { font-size: 12px; padding: 130px; margin-top:  -250px;}
-  .hero-actions { flex-direction: column; gap: 18px; margin-top: -53px; margin-left: 14px;}
-  .hero-trust { gap: 12px; margin-left: -10px; }
-  .hero-visual { min-height: 360px; margin-top: 15px; }
-  .dashboard-preview { height: 285px; grid-template-columns: 55px 1fr; border-width: 4px; width: 324px; margin-right: 113px; }
-  .preview-sidebar { padding: 15px 10px; }
-  .preview-logo { margin-bottom: 28px; font-size: 0; }
-  .preview-welcome { padding: 16px; }
-  .preview-stats { padding: 0 16px; gap: 5px; }
-  .preview-stats > div { padding: 8px; }
-  .preview-stats b { font-size: 10px; }
-  .preview-chart { height: 100px; margin: 8px 16px; }
-  .preview-alert, .preview-scan { min-width: 150px; padding: 9px; }
-  .preview-alert { right: 102px; top: 24px; }
-  .preview-scan { left: -8px; bottom: 4px; }
-  .home-features { padding-top: 75px; padding-bottom: 75px; }
-  .section-heading h2, .steps-intro h2, .benefit-card h2, .home-cta h2 { font-size: 29px; }
-  .feature-grid { grid-template-columns: 1fr; }
-  .feature-grid p { min-height: 0; }
-  .home-steps { width: calc(100% - 40px); padding: 80px 0; grid-template-columns: 1fr; gap: 55px; }
-  .steps-illustration { display: none; }
-  .benefit-card { padding: 65px 28px; }
-  .benefit-chat { width: calc(100% - 32px); margin: 32px auto; padding: 20px; }
-  .home-cta { width: calc(100% - 40px); padding: 70px 0; flex-direction: column; align-items: flex-start; }
-  .home-footer { grid-template-columns: 1fr; gap: 22px; }
-  .home-footer > div { flex-wrap: wrap; }
-
-  }
 
 /* Ajustes finais da landing page para telas pequenas. Mantém o layout desktop intacto. */
 @media (max-width: 767px) {
@@ -3985,25 +2938,11 @@ nav#menu>#container-fluid{
 
 
 
-nav#menu{
-  background-color: transparent !important;
-}
-
-nav#menu>#container-fluid{
-  display: flex !important;
-  margin-top: -170px;
-}
-
-}
-
-
-
-
 @media (prefers-reduced-motion: reduce) {
   .home-page *, .home-page *::before, .home-page *::after { scroll-behavior: auto !important; transition: none !important; }
 }
 
-/* Final responsive overrides: keep layouts fluid after legacy theme rules. */
+/* Layout fluido compartilhado pelo painel e pela página inicial. */
 html,
 body {
   max-width: 100%;
@@ -4372,4 +3311,59 @@ body {
 @media(prefers-reduced-motion:reduce){
   .spin{animation:none}
   .account-form input{transition:none}
+}
+
+/* Padrões de leitura, interação e orientação. */
+.workspace { --text-secondary: #53675d; }
+.workspace .muted, .workspace .eyebrow, .workspace .product-name small,
+.workspace .stat-card > p, .workspace .activity-row small { color: var(--text-secondary); }
+.workspace .product-name small, .workspace .badge, .workspace .stat-card > p,
+.workspace .activity-row small, .workspace .stat-footer { font-size: 13px; }
+.stock-form label, .stock-form input, .stock-form textarea, .stock-form .form-select { font-size: 14px; }
+.input-search:focus-within, .top-search:focus-within, .chat-input:focus-within {
+  outline: 2px solid #12805e;
+  outline-offset: 3px;
+}
+.row-actions button, .cart-quantity button, .search-submit {
+  display: inline-grid; place-items: center; min-width: 44px; min-height: 44px;
+  border-radius: 8px; flex-shrink: 0;
+}
+.search-submit { color: #285d47; cursor: pointer; }
+.top-search { margin: 0; }
+.empty .btn { margin-top: 12px; }
+.cashier-product-grid > .empty { grid-column: 1 / -1; }
+.onboarding-panel {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 16px;
+  padding: 20px; margin-bottom: 24px; background: #eef7f1;
+  border: 1px solid #c9e2d2; border-radius: 12px; color: #244d38;
+}
+.onboarding-panel > div { flex: 1; min-width: 0; }
+.onboarding-panel p { margin: 6px 0 0; font-size: 14px; line-height: 1.6; }
+.onboarding-steps { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 0; padding: 0; list-style: none; }
+.onboarding-steps .btn { min-height: 44px; }
+.onboarding-steps .btn:disabled { opacity: .7; cursor: default; }
+.auth-intent { padding: 12px; border: 1px solid #c9e2d2; border-radius: 8px; background: #eef7f1; color: #244d38; line-height: 1.6; }
+.home-header { position: relative; }
+@media (max-width: 980px) {
+  .home-header { flex-wrap: wrap; gap: 16px; }
+  .home-header nav { gap: 16px; }
+  .home-benefit { grid-template-columns: 1fr; }
+  .benefit-card { padding: 48px 24px; }
+  .home-steps { gap: 40px; }
+}
+@media (max-width: 767px) {
+  .home-header nav { display: none; }
+  .home-brand { font-size: 21px; }
+  .home-brand > span { width: 33px; height: 33px; }
+  .hero-actions, .home-cta { align-items: stretch; }
+  .dashboard-preview { margin: 0; max-width: 100%; }
+  .feature-grid, .home-steps { grid-template-columns: minmax(0, 1fr); }
+  .home-footer { grid-template-columns: minmax(0, 1fr); }
+  .home-footer > div { flex-wrap: wrap; }
+  .onboarding-panel { padding: 16px; }
+  .onboarding-panel > div { flex-basis: 100%; }
+  .onboarding-steps { display: grid; grid-template-columns: 1fr; }
+  .onboarding-steps .btn { width: 100%; justify-content: flex-start; }
+  .btn, .pick, .stock-form input, .stock-form .form-select { min-height: 44px; }
+  .input-search { min-height: 44px; }
 }
