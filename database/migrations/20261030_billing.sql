@@ -34,6 +34,7 @@ create table if not exists public.sk_billing_customers(
   organization_id uuid not null unique references public.sk_companies(id) on delete cascade,
   provider text not null default 'asaas',
   provider_customer_id text not null unique,
+  cpf_cnpj text not null check(length(cpf_cnpj) in (11,14)),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

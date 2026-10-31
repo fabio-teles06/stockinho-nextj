@@ -10,6 +10,10 @@ import {
 
 const tenantId = z.string().uuid();
 const planCode = z.enum(["pro", "pro_founder"]);
+const cpfCnpj = z.string().transform((value) => value.replace(/\D/g, "")).refine(
+  (value) => value.length === 11 || value.length === 14,
+  "Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).",
+);
 
 async function plans(): Promise<BillingPlan[]> {
   const available: BillingPlan[] = await billingSupa(
@@ -79,7 +83,12 @@ export async function POST(req: Request) {
     sameOrigin(req);
     const { token, user } = await session();
     const body = z.discriminatedUnion("action", [
-      z.object({ action: z.literal("checkout"), tenant_id: tenantId, plan: planCode }),
+      z.object({
+        action: z.literal("checkout"),
+        tenant_id: tenantId,
+        plan: planCode,
+        cpf_cnpj: cpfCnpj,
+      }),
       z.object({ action: z.literal("cancel"), tenant_id: tenantId }),
     ]).parse(await req.json());
     await assertAdmin(token, user.id, body.tenant_id);
@@ -121,13 +130,18 @@ export async function POST(req: Request) {
       `/rest/v1/sk_companies?id=eq.${body.tenant_id}&select=name`,
     ))[0];
     if (!company) throw new ApiError("Empresa inválida.", 400);
-    let customer = (await billingSupa(
-      `/rest/v1/sk_billing_customers?organization_id=eq.${body.tenant_id}&select=provider_customer_id`,
-    ))[0]?.provider_customer_id;
+    const storedCustomer = (await billingSupa(
+      `/rest/v1/sk_billing_customers?organization_id=eq.${body.tenant_id}&select=provider_customer_id,cpf_cnpj`,
+    ))[0];
+    let customer = storedCustomer?.provider_customer_id;
     if (!customer) {
       const created = await asaas("/customers", {
         method: "POST",
-        body: JSON.stringify({ name: company.name, email: user.email }),
+        body: JSON.stringify({
+          name: company.name,
+          email: user.email,
+          cpfCnpj: body.cpf_cnpj,
+        }),
       });
       customer = created.id;
       await billingSupa("/rest/v1/sk_billing_customers", {
@@ -136,8 +150,19 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           organization_id: body.tenant_id,
           provider_customer_id: customer,
+          cpf_cnpj: body.cpf_cnpj,
           updated_at: new Date().toISOString(),
         }),
+      });
+    } else if (storedCustomer.cpf_cnpj !== body.cpf_cnpj) {
+      await asaas(`/customers/${customer}`, {
+        method: "PUT",
+        body: JSON.stringify({ cpfCnpj: body.cpf_cnpj }),
+      });
+      await billingSupa(`/rest/v1/sk_billing_customers?organization_id=eq.${body.tenant_id}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ cpf_cnpj: body.cpf_cnpj, updated_at: new Date().toISOString() }),
       });
     }
     const selectedPlan = (await billingSupa(

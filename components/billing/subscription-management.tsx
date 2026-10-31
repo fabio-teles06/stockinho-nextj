@@ -19,6 +19,7 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
   const [data, setData] = useState<BillingData | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [document, setDocument] = useState("");
   const load = useCallback(() => fetch(`/api/billing?tenant_id=${tenantId}`).then(async (response) => {
     const body: unknown = await response.json();
     const result = body as BillingData & { error?: string };
@@ -34,7 +35,12 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
       const response = await fetch("/api/billing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "checkout", tenant_id: tenantId, plan: "pro" }),
+        body: JSON.stringify({
+          action: "checkout",
+          tenant_id: tenantId,
+          plan: "pro",
+          cpf_cnpj: document,
+        }),
       });
       const body: { error?: string; paymentUrl?: string } = await response.json();
       if (!response.ok) throw new Error(body.error);
@@ -102,7 +108,22 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
       </section>
       {data.canManage && (
         <section className="billing-panel billing-actions-panel">
-          {plan.code === "free" && <button className="billing-action primary" disabled={busy} onClick={checkout}>{busy ? <LoaderCircle className="spin" /> : <CreditCard size={16} />} Fazer upgrade para Pro <ArrowRight size={16} /></button>}
+          {plan.code === "free" && (
+            <div className="billing-checkout">
+              <label htmlFor="billing-document">CPF ou CNPJ para cobrança</label>
+              <input
+                id="billing-document"
+                value={document}
+                onChange={(event) => setDocument(event.target.value)}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                autoComplete="off"
+              />
+              <button className="billing-action primary" disabled={busy || !document.trim()} onClick={checkout}>
+                {busy ? <LoaderCircle className="spin" /> : <CreditCard size={16} />} Fazer upgrade para Pro <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
           {active && <button className="billing-action danger" disabled={busy} onClick={cancel}>{busy ? <LoaderCircle className="spin" /> : <X size={16} />} Cancelar assinatura</button>}
           <p><Check size={15} /> O Pro só libera recursos depois da confirmação financeira do Asaas.</p>
         </section>

@@ -178,6 +178,8 @@ Se `/configuracoes/assinatura` mostrar “tabelas de cobrança não foram encont
 
 Se o log mostrar `permission denied for schema stockinho_private` ao iniciar o checkout, execute também `database/migrations/20261030_billing_permissions.sql` no mesmo projeto Supabase. Essa migration corrige a permissão dos wrappers RPC sem expor o schema interno.
 
+O Asaas exige CPF/CNPJ no cadastro do cliente. A tela de assinatura solicita esse documento e o servidor envia apenas os dígitos ao Asaas; nenhum dado de cartão é armazenado.
+
 O fluxo usa `POST /v3/subscriptions` com ciclo `MONTHLY` e `billingType=UNDEFINED`, permitindo que o Asaas disponibilize a cobrança do primeiro ciclo. O método de pagamento e a URL de pagamento são obtidos da cobrança criada pelo Asaas. A integração não armazena dados de cartão. O plano Pro Fundador permanece desabilitado em `sk_billing_settings` até uma decisão administrativa explícita; suas vagas são reservadas sob lock transacional.
 
 O cancelamento atual usa a operação de inativação do Asaas e remove os recursos pagos imediatamente, sem prometer reembolso automático. Atrasos ficam em `past_due` por três dias após o vencimento; reconciliação manual pode ser feita consultando a assinatura no Asaas e reentregando o evento ao webhook.
