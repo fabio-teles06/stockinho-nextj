@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { accountSchema } from "@/lib/billing/account";
 import { ApiError, failure, sameOrigin, session, supa } from "@/lib/stock/server";
 import {
   assertAdmin,
@@ -10,10 +11,6 @@ import {
 
 const tenantId = z.string().uuid();
 const planCode = z.enum(["pro", "pro_founder"]);
-const cpfCnpj = z.string().transform((value) => value.replace(/\D/g, "")).refine(
-  (value) => value.length === 11 || value.length === 14,
-  "Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).",
-);
 
 async function plans(): Promise<BillingPlan[]> {
   const available: BillingPlan[] = await billingSupa(
@@ -90,7 +87,6 @@ export async function POST(req: Request) {
         action: z.literal("checkout"),
         tenant_id: tenantId,
         plan: planCode,
-        cpf_cnpj: cpfCnpj,
       }),
       z.object({ action: z.literal("cancel"), tenant_id: tenantId }),
     ]).parse(await req.json());
@@ -119,6 +115,11 @@ export async function POST(req: Request) {
       return Response.json({ ok: true });
     }
 
+    const profiles = await billingSupa(`/rest/v1/sk_account_profiles?user_id=eq.${user.id}&select=name,email,cpf_cnpj`);
+    const parsedProfile = accountSchema.safeParse(profiles[0]);
+    if (!parsedProfile.success) throw new ApiError("Configure os dados da sua conta antes de contratar a assinatura.", 400);
+    const profile = parsedProfile.data;
+
     const claim = (await billingSupa("/rest/v1/rpc/stockinho_claim_billing_checkout", {
       method: "POST",
       body: JSON.stringify({ p_tenant: body.tenant_id, p_plan_code: body.plan }),
@@ -129,10 +130,6 @@ export async function POST(req: Request) {
       }
       throw new ApiError(claim?.reason || "Não foi possível iniciar a contratação.", 409);
     }
-    const company = (await billingSupa(
-      `/rest/v1/sk_companies?id=eq.${body.tenant_id}&select=name`,
-    ))[0];
-    if (!company) throw new ApiError("Empresa inválida.", 400);
     const storedCustomer = (await billingSupa(
       `/rest/v1/sk_billing_customers?organization_id=eq.${body.tenant_id}&select=provider_customer_id,cpf_cnpj`,
     ))[0];
@@ -141,9 +138,9 @@ export async function POST(req: Request) {
       const created = await asaas("/customers", {
         method: "POST",
         body: JSON.stringify({
-          name: company.name,
-          email: user.email,
-          cpfCnpj: body.cpf_cnpj,
+          name: profile.name,
+          email: profile.email,
+          cpfCnpj: profile.cpf_cnpj,
         }),
       });
       customer = created.id;
@@ -153,19 +150,19 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           organization_id: body.tenant_id,
           provider_customer_id: customer,
-          cpf_cnpj: body.cpf_cnpj,
+          cpf_cnpj: profile.cpf_cnpj,
           updated_at: new Date().toISOString(),
         }),
       });
-    } else if (storedCustomer.cpf_cnpj !== body.cpf_cnpj) {
+    } else {
       await asaas(`/customers/${customer}`, {
         method: "PUT",
-        body: JSON.stringify({ cpfCnpj: body.cpf_cnpj }),
+        body: JSON.stringify({ name: profile.name, email: profile.email, cpfCnpj: profile.cpf_cnpj }),
       });
       await billingSupa(`/rest/v1/sk_billing_customers?organization_id=eq.${body.tenant_id}`, {
         method: "PATCH",
         headers: { Prefer: "return=minimal" },
-        body: JSON.stringify({ cpf_cnpj: body.cpf_cnpj, updated_at: new Date().toISOString() }),
+        body: JSON.stringify({ cpf_cnpj: profile.cpf_cnpj, updated_at: new Date().toISOString() }),
       });
     }
     const selectedPlan = (await billingSupa(

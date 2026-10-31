@@ -432,8 +432,12 @@ export default function StockApp({
           throw Error("Salvo, mas não foi possível atualizar a lista.");
         const next = ((await updated.json()) as { data: Data }).data;
         setData(next);
-        if (!tenant) setTenant(next.companies[0]?.id || "");
-        if (!location) setLocation(next.locations[0]?.id || "");
+        const nextTenant = next.companies.some((company) => company.id === tenant)
+          ? tenant : next.companies[0]?.id || "";
+        setTenant(nextTenant);
+        if (!next.locations.some((item) => item.id === location && item.tenant_id === nextTenant))
+          setLocation(next.locations.find((item) => item.tenant_id === nextTenant)?.id || "");
+        if (nextTenant !== tenant) setMessages([]);
       setModal("");
       setDeleting(null);
       setNotice("Tudo certo! Alteração salva.");
@@ -1870,6 +1874,12 @@ export default function StockApp({
                     <span className="badge neutral">
                       {c.id === tenant ? "Selecionada" : "Empresa"}
                     </span>
+                    {data.memberships.some((member) => member.tenant_id === c.id && member.user_id === initialUserId && member.role === "admin") && (
+                      <button className="btn" disabled={busy} aria-label={`Excluir empresa ${c.name}`} onClick={() => {
+                        if (window.prompt(`Esta ação exclui permanentemente a empresa, produtos, estoque e histórico. Digite "${c.name}" para confirmar:`) === c.name)
+                          void change("delete_company", { tenant_id: c.id });
+                      }}><Trash2 size={15} /> Excluir</button>
+                    )}
                   </div>
                 ))}
                 {canManage && (
@@ -1919,6 +1929,12 @@ export default function StockApp({
                                     <Pencil size={15} />
                                     Editar
                                   </button>
+                                  {member.user_id !== initialUserId && (
+                                    <button className="btn" type="button" disabled={busy} onClick={() => {
+                                      if (window.confirm(`Remover ${member.email} da empresa? O acesso será revogado e o histórico será mantido.`))
+                                        void change("remove_member", { member_id: member.id });
+                                    }}><Trash2 size={15} /> Remover</button>
+                                  )}
                                 </td>
                               )}
                             </tr>
@@ -1940,7 +1956,10 @@ export default function StockApp({
                 <p>
                   Sua conta está conectada ao Supabase. Os dados são isolados por empresa e salvos na nuvem.
                 </p>
-                  <a className="btn" href="/configuracoes/assinatura">
+                  <a className="btn" href="/configuracoes/conta">
+                    <Settings size={16} /> Configurar dados da minha conta
+                  </a>
+                  <a className="btn" href={`/configuracoes/assinatura?tenant_id=${encodeURIComponent(tenant)}`}>
                     <CreditCard size={16} />
                     Gerenciar assinatura
                   </a>

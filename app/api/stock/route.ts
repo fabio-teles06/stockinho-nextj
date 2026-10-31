@@ -25,7 +25,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     sameOrigin(req);
-    const { token } = await session();
+    const { token, user } = await session();
     const b: any = await req.json();
     const action = z
       .enum([
@@ -37,6 +37,8 @@ export async function POST(req: Request) {
         "sale",
         "delete",
         "member",
+        "delete_company",
+        "remove_member",
       ])
       .parse(b.action);
     if (action === "company") {
@@ -49,7 +51,7 @@ export async function POST(req: Request) {
     }
     const tenant = id.parse(b.tenant_id);
     const memberships = await supa(
-      "/rest/v1/sk_memberships?tenant_id=eq." + tenant + "&select=role",
+      "/rest/v1/sk_memberships?tenant_id=eq." + tenant + "&user_id=eq." + user.id + "&select=role",
       token,
     );
     if (!memberships.length)
@@ -59,6 +61,16 @@ export async function POST(req: Request) {
         "Apenas administradores podem realizar esta ação.",
         403,
       );
+    if (action === "delete_company" || action === "remove_member") {
+      await supa(`/rest/v1/rpc/stockinho_${action}`, token, {
+        method: "POST",
+        body: JSON.stringify({
+          p_tenant: tenant,
+          ...(action === "remove_member" ? { p_member: id.parse(b.member_id) } : {}),
+        }),
+      });
+      return Response.json({ ok: true });
+    }
     let item: any,
       table = "";
     if (action === "product") {

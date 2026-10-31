@@ -21,7 +21,6 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
   const [data, setData] = useState<BillingData | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [document, setDocument] = useState("");
   const load = useCallback(() => fetch(`/api/billing?tenant_id=${tenantId}`).then(async (response) => {
     const body: unknown = await response.json();
     const result = body as BillingData & { error?: string };
@@ -41,7 +40,6 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
           action: "checkout",
           tenant_id: tenantId,
           plan: "pro",
-          cpf_cnpj: document,
         }),
       });
       const body: { error?: string; paymentUrl?: string } = await response.json();
@@ -113,16 +111,9 @@ export default function SubscriptionManagement({ tenantId }: { tenantId: string 
         <section className="billing-panel billing-actions-panel">
           {plan.code === "free" && (
             <div className="billing-checkout">
-              <label htmlFor="billing-document">CPF ou CNPJ para cobrança</label>
-              <input
-                id="billing-document"
-                value={document}
-                onChange={(event) => setDocument(event.target.value)}
-                placeholder="000.000.000-00"
-                inputMode="numeric"
-                autoComplete="off"
-              />
-              <button className="billing-action primary" disabled={busy || !document.trim()} onClick={checkout}>
+              <p>Usaremos os dados salvos na sua conta para a cobran?a.</p>
+              <a className="billing-action" href="/configuracoes/conta">Configurar dados da conta</a>
+              <button className="billing-action primary" disabled={busy} onClick={checkout}>
                 {busy ? <LoaderCircle className="spin" /> : <CreditCard size={16} />} Fazer upgrade para Pro <ArrowRight size={16} />
               </button>
             </div>

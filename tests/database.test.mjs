@@ -7,6 +7,10 @@ const db = new PGlite();
 await db.exec(
   `create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;`,
 );
+await db.exec(`create schema storage;
+  create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+  create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);
+  alter table storage.objects enable row level security;`);
 await db.exec(
   await readFile(new URL("../database/schema.sql", import.meta.url), "utf8"),
 );
@@ -154,4 +158,44 @@ await rejects(move, [ta, pa, la, "entrada", 1, "Compra", ""], /arquivado/);
 console.log(
   "PASS: esquema SQL, RLS entre empresas, papéis, estoque por unidade, saldo negativo, imutabilidade, FK composta e arquivamento.",
 );
+await db.exec("reset role");
+await db.exec(await readFile(new URL("../database/migrations/20261031_company_and_member_removal.sql", import.meta.url), "utf8"));
+await as(B);
+await rejects("select public.stockinho_delete_company($1)", [ta], /Apenas administradores/);
+await as(A);
+const ownMembership = await scalar("select id from public.sk_memberships where tenant_id=$1 and user_id=$2", [ta, A]);
+await rejects("select public.stockinho_remove_member($1,$2)", [ta, ownMembership], /próprio acesso/);
+await db.query("select public.stockinho_add_member($1,$2,$3)", [ta, "operator@a.test", "operator"]);
+const memberRows = (await db.query("select * from public.stockinho_list_members($1)", [ta])).rows;
+const operatorMembership = memberRows.find((member) => member.user_id === C).id;
+await as(C);
+await rejects("select public.stockinho_delete_company($1)", [ta], /Apenas administradores/);
+await rejects("select public.stockinho_remove_member($1,$2)", [ta, ownMembership], /Apenas administradores/);
+await as(A);
+await rejects("select public.stockinho_remove_member($1,$2)", [tb, operatorMembership], /Apenas administradores/);
+await db.query("select public.stockinho_remove_member($1,$2)", [ta, operatorMembership]);
+await as(C);
+assert.equal(Number(await scalar("select count(*) from public.sk_companies where id=$1", [ta])), 0);
+await as(A);
+await db.exec("reset role");
+await db.exec("create table public.sk_billing_subscriptions(organization_id uuid references public.sk_companies(id) on delete cascade,provider_subscription_id text,status text)");
+await db.query("insert into public.sk_billing_subscriptions values($1,'sub_test','active')", [ta]);
+await as(A);
+await rejects("select public.stockinho_delete_company($1)", [ta], /Cancele a assinatura/);
+await db.exec("reset role");
+await db.query("update public.sk_billing_subscriptions set status='canceled' where organization_id=$1", [ta]);
+await as(A);
+await db.query("select public.stockinho_delete_company($1)", [ta]);
+await db.exec("reset role");
+assert.equal(Number(await scalar("select count(*) from public.sk_companies where id=$1", [ta])), 0);
+assert.equal(Number(await scalar("select count(*) from public.sk_products where tenant_id=$1", [ta])), 0);
+assert.equal(Number(await scalar("select count(*) from public.sk_companies where id=$1", [tb])), 1);
+console.log("PASS: remoção de membros, revogação de acesso, proteção do administrador e exclusão isolada de empresas com histórico.");
+await db.exec("reset role; create role service_role");
+await db.exec(await readFile(new URL("../database/migrations/20261031_account_profiles.sql", import.meta.url), "utf8"));
+await db.query("insert into public.sk_account_profiles(user_id,name,email,cpf_cnpj) values($1,'Maria Silva','maria@example.com','12345678901')", [A]);
+await as(B);
+await rejects("select * from public.sk_account_profiles", [], /permission denied/);
+await rejects("insert into public.sk_account_profiles(user_id,name,email,cpf_cnpj) values($1,'Outro','outro@example.com','12345678901')", [B], /permission denied/);
+console.log("PASS: dados pessoais da conta protegidos contra acesso direto de outros usuários.");
 await db.close();
