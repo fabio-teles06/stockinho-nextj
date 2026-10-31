@@ -18,10 +18,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { findScannedProduct } from "@/modules/stock/barcodes";
-import {
-  BrowserMultiFormatReader,
-  type IScannerControls,
-} from "@zxing/browser";
+import BarcodeCamera from "./barcode-camera";
 import { Camera, Download, Plus, RefreshCw } from "lucide-react";
 import { money, number, type Data, type Product } from "@/modules/stock/model";
 import type {
@@ -228,54 +225,31 @@ export default function OperationsPanel({
   const [code, setCode] = useState(""),
     [scanned, setScanned] = useState(""),
     [camera, setCamera] = useState(false);
-  const video = useRef<HTMLVideoElement>(null),
-    controls = useRef<IScannerControls | null>(null),
-    lastScan = useRef({ code: "", at: 0 });
+  const [cameraContext, setCameraContext] = useState({ view, tenant });
+  if (cameraContext.view !== view || cameraContext.tenant !== tenant) {
+    setCameraContext({ view, tenant });
+    setCamera(false);
+  }
   const [scanProduct, setScanProduct] = useState("");
   const [selectedInventory, setSelectedInventory] = useState(""),
     [inventorySearch, setInventorySearch] = useState("");
   const found = findScannedProduct(products, scanned);
-  useEffect(() => {
-    if (!camera || !video.current) return;
-    let canceled = false;
-    const reader = new BrowserMultiFormatReader();
-    reader
-      .decodeFromVideoDevice(undefined, video.current, (result) => {
-        if (!result || canceled) return;
-        const value = result.getText(),
-          now = Date.now();
-        if (value === lastScan.current.code && now - lastScan.current.at < 2000)
-          return;
-        lastScan.current = { code: value, at: now };
+  const cameraPreview = (
+    <BarcodeCamera
+      key={view + tenant}
+      onResult={(value) => {
         setCode(value);
         setScanned(value);
-        if (view === "Inventários")
-          setInventorySearch(
-            findScannedProduct(
-              data.products.filter((p) => p.tenant_id === tenant && p.active),
-              value,
-            )?.name || value,
-          );
+        setError("");
+        setInventorySearch(findScannedProduct(products, value)?.name || value);
         setCamera(false);
-      })
-      .then((c) => {
-        if (canceled) c.stop();
-        else controls.current = c;
-      })
-      .catch(() => {
-        if (!canceled) {
-          setCamera(false);
-          setError(
-            "Não foi possível acessar a câmera. Digite o código ou use um leitor USB/Bluetooth.",
-          );
-        }
-      });
-    return () => {
-      canceled = true;
-      controls.current?.stop();
-      controls.current = null;
-    };
-  }, [camera, view, data.products, tenant]);
+      }}
+      onError={(message) => {
+        setError(message);
+        setCamera(false);
+      }}
+    />
+  );
   const inv = ops?.inventories.find((i) => i.id === selectedInventory);
   const invLines =
     ops?.inventoryItems.filter((i) => i.inventory_id === selectedInventory) ||
@@ -435,13 +409,14 @@ export default function OperationsPanel({
               </Field>
               <button className="btn primary">Buscar</button>
             </form>
-            <button className="btn" onClick={() => setCamera(!camera)}>
+            <button className="btn" onClick={() => {
+              setError("");
+              setCamera(!camera);
+            }}>
               <Camera size={16} />
               {camera ? "Fechar câmera" : "Usar câmera"}
             </button>
-            {camera && (
-              <video ref={video} className="scanner-video" muted playsInline />
-            )}
+            {camera && cameraPreview}
             {scanned && !found && (
               <div role="status">
                 <p>Código desconhecido: {scanned}</p>
@@ -589,19 +564,15 @@ export default function OperationsPanel({
                 />
               </Field>
               {pro && (
-                <button className="btn" onClick={() => setCamera(!camera)}>
+                <button className="btn" onClick={() => {
+                  setError("");
+                  setCamera(!camera);
+                }}>
                   <Camera size={16} />
                   {camera ? "Fechar câmera" : "Localizar por câmera"}
                 </button>
               )}
-              {camera && (
-                <video
-                  ref={video}
-                  className="scanner-video"
-                  muted
-                  playsInline
-                />
-              )}
+              {camera && cameraPreview}
               <form
                 className="stock-form"
                 onSubmit={(e) => {
