@@ -9,14 +9,14 @@ const plans = [
     name: "Free",
     price: "R$ 0",
     description: "Para começar a organizar seu negócio.",
-    features: ["50 produtos ativos", "1 membro e 1 local", "Entradas e saídas ilimitadas", "Alertas de estoque mínimo", "Exportação CSV"],
+    features: ["50 produtos ativos", "1 membro e 1 local", "Entradas e saídas ilimitadas", "Leitor e inventário manual", "Uma importação inicial de 50 produtos", "Exportação CSV"],
   },
   {
     code: "pro",
     name: "Pro",
     price: "R$ 29,90",
     description: "Para negócios que precisam crescer com controle.",
-    features: ["2.000 produtos ativos", "Até 3 membros", "Histórico completo e relatórios", "Importação e exportação CSV", "50 consultas de IA por mês"],
+    features: ["2.000 produtos ativos", "Até 3 membros e 3 locais", "Fornecedores e pedidos de compra", "Transferências, lotes e validade", "Etiquetas e relatórios financeiros", "Importação e exportação CSV", "50 consultas de IA por mês"],
   },
 ];
 

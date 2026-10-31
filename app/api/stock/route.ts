@@ -79,6 +79,8 @@ export async function POST(req: Request) {
           id,
           name,
           barcode: z.string().max(60),
+          sku: z.string().trim().max(60).optional(),
+          track_batches: z.boolean().optional(),
           category_id: id,
           unit: z.enum(["un", "kg", "L", "cx"]),
           cost_price: num,
@@ -122,6 +124,7 @@ export async function POST(req: Request) {
           name,
           type: z.enum(["Loja", "Depósito"]),
           address: z.string().max(250),
+          active: z.boolean().optional(),
         })
         .parse(b.item);
       table = "sk_locations";
@@ -161,16 +164,13 @@ export async function POST(req: Request) {
         throw new ApiError(
           "O motivo selecionado não corresponde ao tipo de movimentação.",
         );
-      await supa("/rest/v1/rpc/stockinho_move", token, {
+      await supa("/rest/v1/rpc/stockinho_operate", token, {
         method: "POST",
         body: JSON.stringify({
           p_tenant: tenant,
-          p_product: item.product_id,
-          p_location: item.location_id,
-          p_type: item.type,
-          p_quantity: item.quantity,
-          p_reason: item.reason,
-          p_note: item.note,
+          p_action: "movement",
+          p_key: id.parse(b.key || b.item.id),
+          p_data: item,
         }),
       });
     }

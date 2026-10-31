@@ -63,6 +63,7 @@ export async function billingSupa(
   const text = await response.text();
   const body = text ? JSON.parse(text) : null;
   if (!response.ok) {
+    if(path==='/rest/v1/rpc/stockinho_ai_usage'&&body?.code==='P0001')throw new ApiError(body.message,body.message?.includes('limite mensal')?429:403);
     console.error("[billing] Supabase request failed", {
       path,
       status: response.status,

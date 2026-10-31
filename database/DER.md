@@ -79,3 +79,30 @@ erDiagram
 ```
 
 As chaves estrangeiras compostas `(tenant_id, category_id)`, `(tenant_id, product_id)` e `(tenant_id, location_id)` impedem relações entre empresas diferentes. A RLS usa a associação em `sk_memberships`; `admin` gerencia cadastros e `operator` consulta e registra movimentações.
+
+## Extensões de estoque avançado
+
+```mermaid
+erDiagram
+    SK_COMPANIES ||--o{ SK_OPERATIONS : idempotencia
+    SK_COMPANIES ||--o{ SK_AUDIT_EVENTS : audita
+    SK_COMPANIES ||--o{ SK_AI_REQUESTS : reserva_cota
+    SK_COMPANIES ||--o{ SK_SUPPLIERS : possui
+    SK_PRODUCTS ||--o{ SK_SUPPLIER_PRODUCTS : recebe
+    SK_SUPPLIERS ||--o{ SK_SUPPLIER_PRODUCTS : fornece
+    SK_SUPPLIERS ||--o{ SK_PURCHASE_ORDERS : atende
+    SK_LOCATIONS ||--o{ SK_PURCHASE_ORDERS : recebe
+    SK_PURCHASE_ORDERS ||--|{ SK_PURCHASE_ITEMS : contem
+    SK_PRODUCTS ||--o{ SK_PURCHASE_ITEMS : comprado
+    SK_PURCHASE_ORDERS o|--o{ SK_BATCHES : origina
+    SK_PRODUCTS ||--o{ SK_BATCHES : rastreia
+    SK_LOCATIONS ||--o{ SK_BATCHES : armazena
+    SK_BATCHES o|--o{ SK_MOVEMENTS : rastreia
+    SK_LOCATIONS ||--o{ SK_INVENTORIES : confere
+    SK_INVENTORIES ||--|{ SK_INVENTORY_ITEMS : contem
+    SK_PRODUCTS ||--o{ SK_INVENTORY_ITEMS : contado
+    SK_BATCHES o|--o{ SK_INVENTORY_ITEMS : contado
+    SK_LOCATIONS ||--o{ SK_VALUATIONS : avalia
+```
+
+Produtos também possuem SKU e opção de lotes. Locais possuem ativo/padrão; empresas possuem usuário principal e preferência de validade. Movimentações vinculam lote, origem documental, tipo lógico, custo e saldo resultante. As extensões mantêm chaves compostas por empresa, RLS e escrita apenas por funções autorizadas. Custos médios usam seis casas decimais; totais financeiros usam centavos. Consulte [regras e implantação](../docs/advanced-stock.md).

@@ -12,6 +12,8 @@ export type Location = {
   name: string;
   type: string;
   address: string;
+  active?: boolean;
+  is_default?: boolean;
 };
 export type Category = {
   id: string;
@@ -24,6 +26,8 @@ export type Product = {
   tenant_id: string;
   name: string;
   barcode: string;
+  sku?: string;
+  track_batches?: boolean;
   category_id: string;
   unit: string;
   cost_price: number;
@@ -48,6 +52,12 @@ export type Movement = {
   reason: string;
   note: string;
   created_at: string;
+  movement_kind?: string;
+  batch_id?: string | null;
+  document_id?: string | null;
+  unit_cost?: number | null;
+  balance_after?: number | null;
+  valuation_after?: number | null;
 };
 export type Data = {
   companies: Company[];

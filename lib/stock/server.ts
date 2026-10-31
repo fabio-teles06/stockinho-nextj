@@ -131,13 +131,13 @@ export function sameOrigin(req: Request) {
     throw new ApiError("Origem da requisição inválida.", 403);
   }
 }
-export async function allRows(table: string, token: string) {
-  let rows: any[] = [];
+export async function allRows(table: string, token: string, tenant?: string) {
+  const rows: any[] = [];
   for (let offset = 0; ; offset += 1000) {
     const page = await supa(
       "/rest/v1/" +
         table +
-        "?select=*&order=id&offset=" +
+        "?select=*" + (tenant ? "&tenant_id=eq." + tenant : "") + "&order=id&offset=" +
         offset +
         "&limit=1000",
       token,

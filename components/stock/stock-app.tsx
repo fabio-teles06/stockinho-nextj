@@ -10,6 +10,10 @@ import {
 } from "react";
 import Link from "next/link";
 import PendingInvoiceNotice from "@/components/billing/pending-invoices";
+import dynamic from "next/dynamic";
+import { operationViews } from "@/modules/stock/navigation";
+import { toCSV } from "@/modules/stock/csv-export";
+const OperationsPanel = dynamic(() => import("@/components/stock/operations-panel"), {loading: () => <p role="status">Carregando ferramentas de estoque…</p>});
 import { useRouter } from "next/navigation";
 import {
   Package,
@@ -117,6 +121,7 @@ const nav = [
   ["Movimentações", ArrowLeftRight],
   ["Categorias", Tags],
   ["Lojas e depósitos", Store],
+  ...operationViews.map((label) => [label, Boxes] as const),
   ["Assistente IA", Sparkles],
 ] as const;
 function Pick({
@@ -196,6 +201,7 @@ function IconBox({ icon: Icon, tone = "green" }: { icon: any; tone?: string }) {
   );
 }
 const titles: Record<string, string> = {
+  ...Object.fromEntries(operationViews.map(label => [label, "Operações integradas ao estoque da sua empresa."])),
   "Visão geral": "Um olhar para o seu negócio, tudo em um só lugar.",
   Produtos: "Seu catálogo organizado, do cadastro à prateleira.",
   Movimentações: "Acompanhe cada entrada e saída do seu estoque.",
@@ -233,6 +239,18 @@ export default function StockApp({
   const [edit, setEdit] = useState<any>(null);
   const [deleting, setDeleting] = useState<any>(null);
   const [busy, setBusy] = useState(false);
+  const [operationKey, setOperationKey] = useState(uid);
+  const [aiRemaining, setAiRemaining] = useState<number | null>(null);
+  useEffect(() => {
+    if(view!=="Assistente IA"||!tenant)return;
+    const controller=new AbortController();
+    fetch('/api/stock/operations?usage=1&tenant_id='+tenant,{signal:controller.signal}).then(async r=>{
+      if(!r.ok)return;
+      const b=await r.json() as {entitlements:{pro:boolean;ai_used:number}};
+      if(!controller.signal.aborted)setAiRemaining(b.entitlements.pro?Math.max(0,50-b.entitlements.ai_used):0);
+    }).catch(()=>{});
+    return ()=>controller.abort();
+  },[tenant,view]);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [accountingOpen, setAccountingOpen] = useState(false);
@@ -443,6 +461,7 @@ export default function StockApp({
     setError("");
   }
   function open(type: string, item: any = null) {
+    setOperationKey(uid());
     setEdit(item);
     setModal(type);
     setError("");
@@ -494,13 +513,15 @@ export default function StockApp({
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.currentTarget));
-    const id = edit?.id || uid();
+    const id = edit?.id || operationKey;
     if (modal === "product") {
       const p: Product = {
         id,
         tenant_id: tenant,
         name: String(f.name).trim(),
         barcode: String(f.barcode).trim(),
+        sku: String(f.sku || "").trim(),
+        track_batches: edit?.track_batches || f.track_batches === "on",
         category_id: String(f.category_id),
         unit: String(f.unit),
         cost_price: Number(f.cost_price),
@@ -585,6 +606,7 @@ export default function StockApp({
         name: String(f.name).trim(),
         type: String(f.type),
         address: String(f.address),
+        active: f.active !== "false",
       };
       change("location", { item });
     }
@@ -614,6 +636,7 @@ export default function StockApp({
         const b: any = await r.json();
         if (!r.ok) throw Error(b.error);
       const answer = b.answer;
+      setAiRemaining(typeof b.remaining === "number" ? b.remaining : null);
       setMessages((m) => [...m, { role: "assistant", text: answer }]);
     } catch (e: any) {
       setMessages((m) => [
@@ -648,22 +671,7 @@ export default function StockApp({
         p.sale_price,
       ]),
     ];
-    const text =
-      "\ufeff" +
-      rows
-        .map((r) =>
-          r
-            .map(
-              (c) =>
-                '"' +
-                String(c ?? "")
-                  .replace(/"/g, '""')
-                  .replace(/^[=+@-]/, "'$&") +
-                '"',
-            )
-            .join(";"),
-        )
-        .join("\r\n");
+    const text = toCSV(rows);
     const a = document.createElement("a");
     a.href = URL.createObjectURL(
       new Blob([text], { type: "text/csv;charset=utf-8;" }),
@@ -675,7 +683,7 @@ export default function StockApp({
   }
   const visible = products.filter(
     (p) =>
-      (p.name + " " + p.barcode).toLowerCase().includes(search.toLowerCase()) &&
+      (p.name + " " + p.barcode + " " + (p.sku || "")).toLowerCase().includes(search.toLowerCase()) &&
       (filter === "all" ||
         (filter === "low" && qty(p.id) <= p.min_quantity) ||
         (filter === "zero" && qty(p.id) === 0) ||
@@ -690,24 +698,24 @@ export default function StockApp({
           (movement) =>
             movement.product_id === product.id &&
             movement.type === "saida" &&
+            movement.reason === "Venda" &&
             new Date(movement.created_at).getTime() >= sixtyDaysAgo,
         )
         .reduce((sum, movement) => sum + Number(movement.quantity), 0);
-      const profit = sales * (Number(product.sale_price) - Number(product.cost_price));
       const currentQty = qty(product.id);
       const lastSale = movements
         .filter(
           (movement) =>
-            movement.product_id === product.id && movement.type === "saida",
+            movement.product_id === product.id && movement.type === "saida" && movement.reason === "Venda",
         )
         .reduce(
           (latest, movement) =>
             Math.max(latest, new Date(movement.created_at).getTime()),
           0,
         );
-      return { product, sales, profit, currentQty, lastSale };
+      return { product, sales, currentQty, lastSale };
     })
-    .sort((a, b) => b.profit - a.profit);
+    .sort((a, b) => b.sales - a.sales);
   const topProducts = abcRows.filter((row) => row.sales > 0).slice(0, 5);
   const stagnantProducts = abcRows
     .filter((row) => row.currentQty > 0 && row.lastSale < sixtyDaysAgo)
@@ -1133,6 +1141,12 @@ export default function StockApp({
               />
             </div>
           </div>
+          {(operationViews as readonly string[]).includes(view) && <OperationsPanel key={tenant + location + view} view={view} data={data} tenant={tenant} location={location} canManage={canManage} refresh={async () => {
+            const r = await fetch("/api/stock");
+            const b = await r.json() as {data:Data};
+            if (!r.ok) throw Error("Salvo. Atualize a página para consultar os dados.");
+            setData(b.data);
+          }} />}
           {view === "Visão geral" && (
             <>
               <div className="dashboard-toolbar">
@@ -1350,14 +1364,14 @@ export default function StockApp({
                       <span className="abc-icon positive"><TrendingUp size={16} /></span>
                       <div>
                         <strong>Produtos que mais giram</strong>
-                        <small>Maior margem estimada nas vendas</small>
+                        <small>Quantidade de saídas com motivo Venda</small>
                       </div>
                     </div>
-                    {topProducts.length ? topProducts.map(({ product, sales, profit }) => (
+                    {topProducts.length ? topProducts.map(({ product, sales }) => (
                       <div className="abc-row" key={product.id}>
                         <span>{product.name}</span>
                         <b>{number(sales)} saídas</b>
-                        <small>{money(profit)}</small>
+                        <small>{product.unit}</small>
                       </div>
                     )) : <p className="abc-empty">Ainda não há saídas registradas neste período.</p>}
                   </div>
@@ -1365,7 +1379,7 @@ export default function StockApp({
                     <div className="abc-column-title">
                       <span className="abc-icon neutral"><Clock3 size={16} /></span>
                       <div>
-                        <strong>Produtos parados há mais de 60 dias</strong>
+                        <strong>Produtos sem vendas há mais de 60 dias</strong>
                         <small>Dinheiro parado na prateleira</small>
                       </div>
                     </div>
@@ -1860,6 +1874,7 @@ export default function StockApp({
                 <IconBox icon={Sparkles} />
                 <div>
                   <h2>Assistente Stockinho</h2>
+                  <small>{aiRemaining === null ? "Pro: 50 consultas por mês (UTC)." : `${50 - aiRemaining} de 50 consultas usadas · ${aiRemaining} restantes.`}</small>
                   <p>
                     Consultas aos dados da sua empresa{" "}
                     ·{" "}
@@ -2189,6 +2204,8 @@ export default function StockApp({
                   <input name="image" type="file" accept="image/jpeg,image/png,image/webp" />
                   <small className="form-hint">JPG, PNG ou WEBP, até 5 MB.</small>
                 </label>
+                <label>SKU<input name="sku" maxLength={60} defaultValue={edit?.sku || ""} /></label>
+                <label className="inline-check"><input name="track_batches" type="checkbox" defaultChecked={edit?.track_batches || false} disabled={!!edit?.track_batches} />Controlar lotes e validade (Pro, ativar com saldo zero)</label>
                 <div className="form-grid">
                   <label>
                     Categoria
@@ -2222,7 +2239,7 @@ export default function StockApp({
                       type="number"
                       name="cost_price"
                       min="0"
-                      step="0.01"
+                      step="0.000001"
                       required
                       defaultValue={edit?.cost_price || 0}
                     />
@@ -2394,6 +2411,7 @@ export default function StockApp({
                     placeholder="Rua, número e bairro"
                   />
                 </label>
+                <label>Situação<select name="active" defaultValue={String(edit?.active ?? true)}><option value="true">Ativo</option><option value="false">Arquivado (saldo deve ser zero)</option></select></label>
               </>
             )}
             {error && (

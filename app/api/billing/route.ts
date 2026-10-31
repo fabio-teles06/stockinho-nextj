@@ -23,19 +23,16 @@ async function plans(): Promise<BillingPlan[]> {
   return available.filter((plan) => plan.code !== "pro_founder" || founderEnabled);
 }
 
-async function usage(tenant: string, plan: BillingPlan) {
-  const [products, members, usageRows] = await Promise.all([
-    billingSupa(`/rest/v1/sk_products?tenant_id=eq.${tenant}&active=eq.true&select=id`),
-    billingSupa(`/rest/v1/sk_memberships?tenant_id=eq.${tenant}&select=id`),
-    billingSupa(`/rest/v1/sk_billing_usage?organization_id=eq.${tenant}&metric=eq.ai_queries&select=used,period_start&order=period_start.desc&limit=1`),
-  ]);
+async function usage(tenant: string, token:string) {
+  const counts = await supa('/rest/v1/rpc/stockinho_entitlements',token,{method:'POST',body:JSON.stringify({p_tenant:tenant})});
   return {
-    products: { used: products.length, limit: plan.product_limit },
-    members: { used: members.length, limit: plan.user_limit },
+    products: { used: counts.product_count, limit: counts.product_limit },
+    members: { used: counts.member_count, limit: counts.user_limit },
+    locations: { used: counts.location_count, limit: counts.location_limit },
     ai: {
-      used: usageRows[0]?.used ?? 0,
-      limit: plan.ai_monthly_limit,
-      periodStart: usageRows[0]?.period_start ?? null,
+      used: counts.ai_used,
+      limit: counts.pro ? 50 : 0,
+      periodStart: new Date().toISOString().slice(0,7)+'-01',
     },
   };
 }
@@ -70,7 +67,7 @@ export async function GET(req: Request) {
       pendingPayments: await billingSupa(
         `/rest/v1/sk_billing_payments?organization_id=eq.${organizationId}&status=in.(PENDING,OVERDUE)&select=id,status,value,due_date,invoice_url&order=due_date.asc.nullslast,created_at.asc`,
       ),
-      usage: await usage(organizationId, plan),
+      usage: await usage(organizationId, token),
       canManage: memberships[0].role === "admin",
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

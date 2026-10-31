@@ -1,5 +1,9 @@
 # Stockinho
 
+## Estoque avançado
+
+A implementação atual acrescenta leitor por câmera, inventários, importação CSV, fornecedores, compras com recebimento parcial, etiquetas PDF, transferências, lotes/validade e relatórios financeiros, integrados ao assistente e aos planos. Consulte [auditoria, operação, migrations e limitações](docs/advanced-stock.md) antes de publicar. As três novas migrations de estoque devem ser aplicadas ao Supabase; o deploy não as executa automaticamente.
+
 Para publicar no Railway, siga DEPLOY_RAILWAY.md. O projeto inclui Dockerfile, configuração de healthcheck e scripts de build/start com Next.js convencional.
 
 Sistema acadêmico de estoque para pequenos comércios. Frontend e API seguem o Next.js App Router, com React, TypeScript, Shadcn, Recharts e Supabase Auth/Postgres. A publicação em Sites utiliza Vinext, uma implementação compatível com a API do Next.js para Cloudflare Workers. O código também pode ser executado com o Next.js convencional, conforme abaixo.
@@ -204,7 +208,7 @@ curl -X POST http://localhost:3000/api/chat \
 
 ## Limites
 
-A consulta é paginada no servidor, mas carrega um snapshot completo no navegador, adequada ao escopo acadêmico/pequeno comércio. O histórico na interface mostra as 100 últimas movimentações; as análises usam todos os registros carregados. Cada tabela tem limite de 100 mil registros na consulta. Para escala maior, mover as agregações para SQL e paginar a interface. Não inclui PDV, emissão fiscal, transferências entre unidades, convites por e-mail ou recuperação de senha. As unidades têm CRUD de criação, leitura e edição; não são excluídas para preservar vínculos de histórico. O catálogo usa arquivamento em lugar de exclusão física.
+A consulta principal é paginada no servidor, mas carrega um snapshot completo no navegador. O histórico principal mostra as 100 últimas movimentações; análises usam os registros carregados. Cada tabela tem limite de 100 mil registros por consulta. Para escala maior, pagine a interface e substitua os demais snapshots por agregações; os relatórios financeiros novos já usam SQL. O catálogo e os locais usam arquivamento. O estado dos módulos atuais, incluindo transferências, caixa e lotes, está documentado no [relatório de estoque avançado](docs/advanced-stock.md).
 
 ## Verificações
 

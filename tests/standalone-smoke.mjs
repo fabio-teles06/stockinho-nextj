@@ -7,7 +7,8 @@ const port=reservation.address().port;
 await new Promise(resolve=>reservation.close(resolve));
 const origin='http://127.0.0.1:'+port;
 const env={...process.env,PORT:String(port),HOSTNAME:'127.0.0.1',APP_URL:origin,NODE_ENV:'production'};
-for(const key of ['SUPABASE_URL','SUPABASE_PUBLISHABLE_KEY','GEMINI_API_KEY','GEMINI_MODEL'])delete env[key];
+// Explicit empties prevent a traced .env file from reintroducing real external configuration.
+for(const key of ['SUPABASE_URL','SUPABASE_PUBLISHABLE_KEY','GEMINI_API_KEY','GEMINI_MODEL'])env[key]='';
 const server=spawn(process.execPath,['.next/standalone/server.js'],{env,stdio:['ignore','pipe','pipe']});
 let logs='';server.stdout.on('data',x=>logs+=x);server.stderr.on('data',x=>logs+=x);
 try {
@@ -24,6 +25,11 @@ try {
   assert.equal((await fetch(origin+'/favicon.svg')).status,200);
   assert.equal((await fetch(origin+'/login')).status,200);
   const stock=await fetch(origin+'/api/stock');assert.equal(stock.status,401);assert.ok((await stock.json()).error);
+  for(const route of ['/api/stock/operations?tenant_id='+crypto.randomUUID(),'/api/stock/finance?tenant_id='+crypto.randomUUID()+'&location_id='+crypto.randomUUID()])assert.equal((await fetch(origin+route)).status,401);
+  for(const route of ['/api/stock/operations','/api/stock/labels','/api/chat']){
+    assert.equal((await fetch(origin+route,{method:'POST',headers:{origin,'Content-Type':'application/json'},body:'{}'})).status,401);
+    assert.equal((await fetch(origin+route,{method:'POST',headers:{origin:'https://evil.example','Content-Type':'application/json'},body:'{}'})).status,403);
+  }
   const blocked=await fetch(origin+'/api/auth',{method:'POST',headers:{origin:'https://evil.example','Content-Type':'application/json'},body:'{}'});assert.equal(blocked.status,403);
   const missing=await fetch(origin+'/api/auth',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify({email:'test@example.com',password:'test-password',action:'login'})});assert.equal(missing.status,503);
   console.log('PASS: Next.js standalone, painel, login, CSS, favicon, healthcheck, API 401 e validação de origem.');
