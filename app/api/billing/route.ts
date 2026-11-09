@@ -99,13 +99,21 @@ export async function POST(req: Request) {
         return Response.json({ ok: true, message: "Não há cobrança recorrente ativa." });
       }
       await asaas(`/subscriptions/${current.provider_subscription_id}`, { method: "DELETE" });
+      const freePlan = (await billingSupa(
+        "/rest/v1/sk_billing_plans?code=eq.free&is_active=eq.true&select=id",
+      ))[0];
+      if (!freePlan?.id) {
+        throw new ApiError("O plano Free não está configurado no Supabase.", 503);
+      }
       await billingSupa(`/rest/v1/sk_billing_subscriptions?organization_id=eq.${body.tenant_id}`, {
         method: "PATCH",
         headers: { Prefer: "return=minimal" },
         body: JSON.stringify({
+          plan_id: freePlan.id,
           status: "canceled",
           canceled_at: new Date().toISOString(),
           cancel_at_period_end: false,
+          past_due_until: null,
           updated_at: new Date().toISOString(),
         }),
       });

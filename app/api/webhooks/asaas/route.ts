@@ -98,11 +98,25 @@ export async function POST(req: Request) {
   }
   if (subscription && !stale && event.event.startsWith("SUBSCRIPTION_")) {
     const inactive = ["SUBSCRIPTION_INACTIVATED", "SUBSCRIPTION_DELETED"].includes(event.event);
+    const freePlan = inactive
+      ? (await billingSupa("/rest/v1/sk_billing_plans?code=eq.free&is_active=eq.true&select=id"))[0]
+      : null;
+    if (inactive && !freePlan?.id) {
+      throw new Error("O plano Free não está configurado no Supabase.");
+    }
     await billingSupa(`/rest/v1/sk_billing_subscriptions?id=eq.${subscription.id}`, {
       method: "PATCH",
       headers: { Prefer: "return=minimal" },
       body: JSON.stringify({
         status: inactive ? "canceled" : subscription.status,
+        ...(inactive
+          ? {
+              plan_id: freePlan.id,
+              canceled_at: occurredAt,
+              cancel_at_period_end: false,
+              past_due_until: null,
+            }
+          : {}),
         last_event_at: occurredAt,
         updated_at: new Date().toISOString(),
       }),
