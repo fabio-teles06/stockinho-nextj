@@ -33,7 +33,6 @@ import {
   ChevronRight,
   Plus,
   ArrowUpRight,
-  ArrowDownRight,
   TriangleAlert,
   Wallet,
   Boxes,
@@ -44,14 +43,12 @@ import {
   TrendingUp,
   Clock3,
   Check,
-  MoreHorizontal,
   Pencil,
   Trash2,
   LogOut,
   Building2,
   Leaf,
   X,
-  SlidersHorizontal,
   ShoppingCart,
   CreditCard,
   ScanBarcode,
@@ -89,7 +86,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import {
   Select,
@@ -124,6 +120,15 @@ import {
   money,
   number,
 } from "@/modules/stock/model";
+import type { ComponentType, ReactElement } from "react";
+type EditableItem = Partial<Product & {
+  type: string;
+  address: string;
+  color: string;
+  email: string;
+  role: string;
+  product_id: string;
+}>;
 const nav = [
   ["Visão geral", LayoutDashboard],
   ["Caixa", ShoppingCart],
@@ -183,11 +188,14 @@ function FormSelect({
 }) {
   const options = Children.toArray(children)
     .filter(isValidElement)
-    .map((el: any) => ({
-      value: el.props.value ?? el.props.children,
-      label: el.props.children,
-      disabled: el.props.disabled,
-    }));
+    .map((el) => {
+      const props = (el as ReactElement<{ value?: string; children?: React.ReactNode; disabled?: boolean }>).props;
+      return {
+        value: props.value ?? String(props.children ?? ""),
+        label: props.children,
+        disabled: props.disabled,
+      };
+    });
   return (
     <Select
       name={name}
@@ -211,7 +219,7 @@ function FormSelect({
     </Select>
   );
 }
-function IconBox({ icon: Icon, tone = "green" }: { icon: any; tone?: string }) {
+function IconBox({ icon: Icon, tone = "green" }: { icon: ComponentType<{ size?: number }>; tone?: string }) {
   return (
     <span className={"icon-box " + tone}>
       <Icon size={21} />
@@ -254,8 +262,8 @@ export default function StockApp({
   const [modal, setModal] = useState(
     initialData.companies.length ? "" : "company",
   );
-  const [edit, setEdit] = useState<any>(null);
-  const [deleting, setDeleting] = useState<any>(null);
+  const [edit, setEdit] = useState<EditableItem | null>(null);
+  const [deleting, setDeleting] = useState<{ type: "product" | "category"; item: Product | { id: string; name: string } } | null>(null);
   const [busy, setBusy] = useState(false);
   const [operationKey, setOperationKey] = useState(uid);
   const [aiRemaining, setAiRemaining] = useState<number | null>(null);
@@ -342,7 +350,7 @@ export default function StockApp({
   const current = useRef({ data, tenant, location });
   current.current = { data, tenant, location };
   useEffect(() => {
-    const registry = (document as any).modelContext;
+    const registry = (document as Document & { modelContext?: { registerTool?: (...args: unknown[]) => unknown } }).modelContext;
     if (!registry?.registerTool) return;
     const controller = new AbortController();
     try {
@@ -478,7 +486,7 @@ export default function StockApp({
     setFilter("all");
     setError("");
   }
-  function open(type: string, item: any = null) {
+  function open(type: string, item: EditableItem | null = null) {
     setOperationKey(uid());
     setEdit(item);
     setModal(type);
@@ -486,7 +494,7 @@ export default function StockApp({
   }
   async function change(
     action: string,
-    payload: any,
+    payload: Record<string, unknown>,
   ): Promise<boolean> {
     setBusy(true);
     setError("");
@@ -496,7 +504,7 @@ export default function StockApp({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action, tenant_id: tenant, ...payload }),
         });
-        const b: any = await r.json();
+        const b = await r.json() as { error?: string };
         if (!r.ok) throw Error(b.error || "Não foi possível salvar.");
         const updated = await fetch("/api/stock");
         if (!updated.ok)
@@ -513,8 +521,8 @@ export default function StockApp({
       setDeleting(null);
       setNotice("Tudo certo! Alteração salva.");
       return true;
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Não foi possível salvar.");
       return false;
     } finally {
       setBusy(false);
@@ -651,17 +659,17 @@ export default function StockApp({
             location_id: location,
           }),
         });
-        const b: any = await r.json();
-        if (!r.ok) throw Error(b.error);
-      const answer = b.answer;
+        const b = await r.json() as { answer?: string; remaining?: number; error?: string };
+        if (!r.ok) throw Error(b.error || "Não foi possível consultar agora.");
+      const answer = b.answer || "Não foi possível obter uma resposta.";
       setAiRemaining(typeof b.remaining === "number" ? b.remaining : null);
       setMessages((m) => [...m, { role: "assistant", text: answer }]);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setMessages((m) => [
         ...m,
         {
           role: "assistant",
-          text: "Não consegui consultar agora. " + e.message,
+          text: "Não consegui consultar agora. " + (e instanceof Error ? e.message : "Tente novamente."),
         },
       ]);
     } finally {
@@ -1010,10 +1018,10 @@ export default function StockApp({
           </SidebarMenu>
           <div className="nav-label manage">GERENCIAR</div>
           <SidebarMenu>
-            {[
+            {([
               ["Configurações", Settings],
               ["Ajuda", HelpCircle],
-            ].map(([name, Icon]: any) => (
+            ] as const).map(([name, Icon]) => (
               <SidebarMenuItem key={name}>
                 <SidebarMenuButton
                   className={"nav-item " + (view === name ? "selected" : "")}
@@ -2483,6 +2491,7 @@ export default function StockApp({
               className="btn destructive"
               disabled={busy}
               onClick={() => {
+                if (!deleting) return;
                 if (
                   deleting.type === "product" &&
                   data.balances.some(

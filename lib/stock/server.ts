@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { isAllowedOrigin } from "./origin";
 import { SESSION_MAX_AGE } from "./session-policy";
+import type { Data } from "@/modules/stock/model";
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -20,11 +21,11 @@ export function config() {
     );
   return { url, key };
 }
-export async function supa(
+export async function supa<T = Record<string, unknown>>(
   path: string,
   token: string,
   init: RequestInit = {},
-): Promise<any> {
+): Promise<T> {
   const { url, key } = config();
   let r: Response;
 
@@ -66,7 +67,7 @@ export async function session() {
   const refresh = jar.get("sk_refresh")?.value;
   if (!token && refresh) {
     try {
-      const s = await supa(
+      const s = await supa<{ access_token?: string; refresh_token?: string }>(
         "/auth/v1/token?grant_type=refresh_token",
         config().key,
         { method: "POST", body: JSON.stringify({ refresh_token: refresh }) },
@@ -79,14 +80,14 @@ export async function session() {
   }
   if (!token) throw new ApiError("Entre na sua conta para continuar.", 401);
   try {
-    const user = await supa("/auth/v1/user", token);
+    const user = await supa<{ id: string; email?: string }>("/auth/v1/user", token);
     if (!user?.id) throw new ApiError("Sessão inválida.", 401);
     return { token, user };
   } catch (e) {
     if (e instanceof ApiError && e.status !== 401 && e.status !== 403) throw e;
     if (!refresh) throw new ApiError("Sessão inválida.", 401);
     try {
-      const s = await supa(
+      const s = await supa<{ access_token: string; refresh_token: string }>(
         "/auth/v1/token?grant_type=refresh_token",
         config().key,
         { method: "POST", body: JSON.stringify({ refresh_token: refresh }) },
@@ -94,15 +95,17 @@ export async function session() {
       await saveSession(s);
       return {
         token: s.access_token,
-        user: await supa("/auth/v1/user", s.access_token),
+        user: await supa<{ id: string; email?: string }>("/auth/v1/user", s.access_token),
       };
     } catch {
       throw new ApiError("Sua sessão expirou. Entre novamente.", 401);
     }
   }
 }
-export async function saveSession(s: any) {
-  if (!s?.access_token || !s?.refresh_token) throw new ApiError("Não foi possível renovar a sessão. Entre novamente.", 401);
+export async function saveSession(s: unknown) {
+  if (!s || typeof s !== "object") throw new ApiError("Não foi possível renovar a sessão. Entre novamente.", 401);
+  const session = s as { access_token?: string; refresh_token?: string; expires_in?: number };
+  if (!session.access_token || !session.refresh_token) throw new ApiError("Não foi possível renovar a sessão. Entre novamente.", 401);
   const jar = await cookies();
   const opts = {
     httpOnly: true,
@@ -110,11 +113,11 @@ export async function saveSession(s: any) {
     sameSite: "lax" as const,
     path: "/",
   };
-  jar.set("sk_access", s.access_token, {
+  jar.set("sk_access", session.access_token, {
     ...opts,
-    maxAge: s.expires_in || 3600,
+    maxAge: session.expires_in || 3600,
   });
-  jar.set("sk_refresh", s.refresh_token, {
+  jar.set("sk_refresh", session.refresh_token, {
     ...opts,
     maxAge: SESSION_MAX_AGE,
   });
@@ -133,9 +136,9 @@ export function sameOrigin(req: Request) {
   }
 }
 export async function allRows(table: string, token: string, tenant?: string) {
-  const rows: any[] = [];
+  const rows: unknown[] = [];
   for (let offset = 0; ; offset += 1000) {
-    const page = await supa(
+    const page = await supa<unknown[]>(
       "/rest/v1/" +
         table +
         "?select=*" + (tenant ? "&tenant_id=eq." + tenant : "") + "&order=id&offset=" +
@@ -166,19 +169,21 @@ export async function snapshot(token: string) {
     );
   const memberships = (
     await Promise.all(
-      companies.map((company: { id: string }) =>
-        supa("/rest/v1/rpc/stockinho_list_members", token, {
+      companies.map((company) =>
+        supa<unknown[]>("/rest/v1/rpc/stockinho_list_members", token, {
           method: "POST",
-          body: JSON.stringify({ p_tenant: company.id }),
+          body: JSON.stringify({ p_tenant: String((company as { id: string }).id) }),
         }),
       ),
     )
   ).flat();
-  return { companies, memberships, locations, categories, products, balances, movements };
+  return { companies, memberships, locations, categories, products, balances, movements } as Data;
 }
-export function failure(e: any) {
+export function failure(e: unknown) {
+  const error = e instanceof Error ? e : new Error("Erro inesperado.");
+  const status = e instanceof ApiError ? e.status : 500;
   return Response.json(
-    { error: e.message || "Erro inesperado." },
-    { status: e.status || 500, headers: { "Cache-Control": "no-store" } },
+    { error: error.message },
+    { status, headers: { "Cache-Control": "no-store" } },
   );
 }

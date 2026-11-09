@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,6 +8,13 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
+  },
+  manifest: "/manifest.webmanifest",
+  themeColor: "#12805e",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Stockinho",
   },
 };
 
@@ -17,7 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }

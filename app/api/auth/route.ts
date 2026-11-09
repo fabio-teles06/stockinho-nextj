@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       ])
       .parse(await req.json());
     if (b.action === "reset") {
-      const s = await supa("/auth/v1/recover", config().key, {
+      const s = await supa<{ error?: string; error_description?: string; msg?: string }>("/auth/v1/recover", config().key, {
         method: "POST",
         body: JSON.stringify({ email: b.email }),
       });
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       b.action === "signup"
         ? "/auth/v1/signup"
         : "/auth/v1/token?grant_type=password";
-    const s = await supa(path, config().key, {
+    const s = await supa<{ access_token?: string; refresh_token?: string; expires_in?: number }>(path, config().key, {
       method: "POST",
       body: JSON.stringify({ email: b.email, password: b.password }),
     });
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       message:
         "Confira seu e-mail para confirmar o cadastro e depois entre na sua conta.",
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     if (e instanceof z.ZodError)
       return Response.json(
         {

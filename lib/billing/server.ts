@@ -142,7 +142,7 @@ export function billingIdempotencyKey(organizationId: string, planCode: string) 
 }
 
 export async function assertAdmin(token: string, userId: string, tenantId: string) {
-  const rows = await supa(
+  const rows = await supa<Array<{ role?: string }>>(
     `/rest/v1/sk_memberships?tenant_id=eq.${tenantId}&user_id=eq.${userId}&select=role`,
     token,
   );

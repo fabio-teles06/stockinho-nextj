@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     if (!tenant) return Response.json({ plans: availablePlans });
     const { token, user } = await session();
     const organizationId = tenantId.parse(tenant);
-    const memberships = await supa(
+    const memberships = await supa<Array<{ role?: string }>>(
       `/rest/v1/sk_memberships?tenant_id=eq.${organizationId}&user_id=eq.${user.id}&select=role`,
       token,
     );

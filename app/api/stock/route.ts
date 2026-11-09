@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   try {
     sameOrigin(req);
     const { token, user } = await session();
-    const b: any = await req.json();
+    const b = await req.json() as Record<string, unknown>;
     const action = z
       .enum([
         "company",
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       return Response.json({ ok: true });
     }
     const tenant = id.parse(b.tenant_id);
-    const memberships = await supa(
+    const memberships = await supa<Array<{ role?: string }>>(
       "/rest/v1/sk_memberships?tenant_id=eq." + tenant + "&user_id=eq." + user.id + "&select=role",
       token,
     );
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
       });
       return Response.json({ ok: true });
     }
-    let item: any,
+    let item: Record<string, unknown> = {},
       table = "";
     if (action === "product") {
       item = z
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
         if (!match || match[2].length > 7_000_000)
           throw new ApiError("A foto deve ser JPG, PNG ou WEBP e ter no máximo 5 MB.");
         const { url, key } = config();
-        const imagePath = `${tenant}/${item.id}.${match[1].split("/")[1]}`;
+        const imagePath = `${tenant}/${String(item.id)}.${match[1].split("/")[1]}`;
         const upload = await fetch(`${url}/storage/v1/object/product-images/${imagePath}`, {
           method: "POST",
           headers: {
@@ -157,9 +157,9 @@ export async function POST(req: Request) {
         })
         .parse(b.item);
       if (
-        (item.type === "entrada" && ["Venda", "Perda"].includes(item.reason)) ||
+        (item.type === "entrada" && ["Venda", "Perda"].includes(String(item.reason))) ||
         (item.type === "saida" &&
-          ["Compra", "Ajuste inicial"].includes(item.reason))
+          ["Compra", "Ajuste inicial"].includes(String(item.reason)))
       )
         throw new ApiError(
           "O motivo selecionado não corresponde ao tipo de movimentação.",
@@ -169,7 +169,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           p_tenant: tenant,
           p_action: "movement",
-          p_key: id.parse(b.key || b.item.id),
+          p_key: id.parse(b.key || (b.item as Record<string, unknown>).id),
           p_data: item,
         }),
       });
@@ -222,7 +222,7 @@ export async function POST(req: Request) {
           "O envio de convite ainda não está configurado. Defina RESEND_API_KEY e RESEND_FROM_EMAIL.",
           503,
         );
-      const companyRows = await supa(
+      const companyRows = await supa<Array<{ name?: string }>>(
         "/rest/v1/sk_companies?id=eq." + tenant + "&select=name",
         token,
       );
@@ -262,7 +262,7 @@ export async function POST(req: Request) {
       }
     }
     return Response.json({ ok: true });
-  } catch (e: any) {
+  } catch (e: unknown) {
     if (e instanceof z.ZodError)
       return Response.json(
         {
