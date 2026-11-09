@@ -1,5 +1,5 @@
 # Railway: Next.js + API em um único serviço Node.
-FROM node:22-bookworm-slim AS dependencies
+FROM node:22.23.4-bookworm-slim AS dependencies
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable && corepack prepare pnpm@11.25.0 --activate
@@ -10,7 +10,7 @@ FROM dependencies AS builder
 COPY . .
 RUN pnpm run build:railway
 
-FROM node:22-bookworm-slim AS runner
+FROM node:22.23.4-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
